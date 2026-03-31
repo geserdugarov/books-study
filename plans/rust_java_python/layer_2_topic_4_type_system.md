@@ -51,18 +51,33 @@
 | Python | Ramalho (2022) — *Fluent Python* | Ch.15 pp. 519–560 | More About Type Hints — @overload, TypedDict, generics, variance (covariance/contravariance) |
 | Python | Ramalho (2022) — *Fluent Python* | Ch.16 pp. 561–590 | Operator Overloading — unary/infix operators, rich comparison, augmented assignment |
 | Python | Gorelick & Ozsvald (2020) — *High Performance Python* | Ch.3 pp. 65–77 | Lists vs Tuples — type implications for performance, memory layout |
+| Rust | Gjengset (2022) — *Rust for Rustaceans* | Ch.1 pp. 1–17 | Foundations — memory regions, ownership deep dive, borrowing and lifetimes (shared/mutable references, interior mutability, lifetime variance) |
+| Rust | Gjengset (2022) — *Rust for Rustaceans* | Ch.2 pp. 19–35 | Types — memory alignment and layout, DSTs and wide pointers, traits and dispatch (static/dynamic, coherence, orphan rule), marker traits, existential types |
+| Rust | Gjengset (2022) — *Rust for Rustaceans* | Ch.3 pp. 37–56 | Designing Interfaces — API design principles (unsurprising, flexible, obvious, constrained), generic arguments, object safety, borrowed vs owned |
+| Java | Naftalin & Wadler (2024) — *Java Generics and Collections* | Ch.1 | Subtyping and Wildcards — Substitution Principle, wildcards (extends/super), Get and Put Principle (PECS), wildcard capture |
+| Java | Naftalin & Wadler (2024) — *Java Generics and Collections* | Ch.2 | Comparison and Bounds — Comparable, Comparator, multiple bounds, bridge methods, covariant overriding |
+| Java | Naftalin & Wadler (2024) — *Java Generics and Collections* | Ch.3 | Declarations — generics in constructors, static members, nested classes, how erasure works |
+| Java | Naftalin & Wadler (2024) — *Java Generics and Collections* | Ch.5 | Reification — reifiable types, instance tests, array creation restrictions, Principle of Truth in Advertising |
+| Java | Naftalin & Wadler (2024) — *Java Generics and Collections* | Ch.6 | Design Patterns — Visitor, Interpreter, Strategy, Observer, Factory patterns reimagined with generics |
+| Python | Viafore (2021) — *Robust Python* | Ch.2–3 pp. 23–44 | Introduction to Python Types, Type Annotations — mechanical vs semantic types, typing systems, annotation benefits |
+| Python | Viafore (2021) — *Robust Python* | Ch.4 pp. 45–60 | Constraining Types — Optional, Union, Product and Sum types, Literal, Annotated, NewType, Final |
+| Python | Viafore (2021) — *Robust Python* | Ch.5 pp. 61–76 | Collection Types — annotating collections, homogeneous vs heterogeneous, TypedDict, creating custom generic collections |
+| Python | Viafore (2021) — *Robust Python* | Ch.6–7 pp. 79–106 | Customizing Your Typechecker, Adopting Typechecking — mypy/Pyre/Pyright configuration, gradual adoption strategy |
+| Python | Viafore (2021) — *Robust Python* | Ch.8–9 pp. 111–134 | User-Defined Types: Enums, Data Classes — Enum/Flag, dataclass usage and comparison with dict/TypedDict/namedtuple |
+| Python | Viafore (2021) — *Robust Python* | Ch.10 pp. 135–152 | User-Defined Types: Classes — class invariants, encapsulation, maintaining invariants |
+| Python | Viafore (2021) — *Robust Python* | Ch.12 pp. 171–185 | Subtyping — inheritance, Liskov Substitution Principle, composition over inheritance |
+| Python | Viafore (2021) — *Robust Python* | Ch.13 pp. 187–197 | Protocols — structural subtyping, defining protocols, composite protocols, runtime checkable protocols |
+| Python | Viafore (2021) — *Robust Python* | Ch.14 pp. 199–210 | Runtime Checking With pydantic — dynamic configuration, validators, validation vs parsing |
 
 ### Coverage Gaps
 
 The owned books **do not** cover:
 
 - **Formal type theory foundations** — no book explains the theoretical underpinnings (Hindley-Milner type inference, System F, algebraic type theory) that inform Rust's and Java's type systems; the books are practical, not theoretical
-- **Rust's PhantomData and zero-sized types in depth** — Klabnik mentions DSTs and the never type; Blandy covers Sized; but PhantomData usage patterns for variance annotation and type-level state machines are not explored
-- **Java Project Valhalla (value types)** — the upcoming fundamental change to Java's type system (inline classes, primitive objects) that will blur the primitive/reference divide is not covered in any owned book
-- **Python ParamSpec and Concatenate** — the newer typing constructs for decorators and higher-order function typing (PEP 612) are not covered in Ramalho or Martelli
-- **Cross-language variance comparison** — no book compares covariance/contravariance rules across all three languages side by side; Ramalho covers Python variance, Bloch covers Java wildcards, but the Rust lifetime variance story requires the Rustonomicon
-- **Refinement types and dependent types** — advanced type system concepts (e.g., types that encode value constraints) are not covered; relevant as context for understanding what Rust's type system cannot express
+- **Rust's PhantomData and variance in depth** — Gjengset covers DSTs, marker traits, and existential types; but PhantomData usage patterns for variance annotation and type-state machines still require the Rustonomicon for full treatment
+- **Python ParamSpec and Concatenate** — the newer typing constructs for decorators and higher-order function typing (PEP 612) are not deeply covered; Viafore covers up to Protocols but predates some newer typing features
 - **TypeGuard and type narrowing** — Python's TypeGuard (PEP 647) and TypeIs (PEP 742) for custom type narrowing in control flow are not covered in the owned books
+- **Refinement types and dependent types** — advanced type system concepts (e.g., types that encode value constraints) are not covered; relevant as context for understanding what Rust's type system cannot express
 
 ---
 
@@ -221,9 +236,6 @@ The owned books **do not** cover:
 
 | Language | Book | Why |
 |----------|------|-----|
-| Rust | Jon Gjengset — *Rust for Rustaceans* (No Starch Press, 2021) | Advanced type system patterns: trait design, generics strategies, PhantomData, variance, type-state pattern, advanced lifetime usage — fills the gap between introductory books and real-world Rust type system mastery |
-| Java | Maurice Naftalin & Philip Wadler — *Java Generics and Collections* (O'Reilly, 2006) | The canonical deep dive into Java generics: wildcards, bounds, erasure, PECS, bridge methods, reification — written by the generics specification co-author; despite age, the fundamentals remain accurate |
-| Python | Patrick Viafore — *Robust Python* (O'Reilly, 2021) | Dedicated to making Python code more type-safe: typing module deep dive, user-defined types, runtime type checking, design patterns for type safety in a dynamically typed language |
 | General | Benjamin C. Pierce — *Types and Programming Languages* (MIT Press, 2002) | The foundational textbook on type theory: type safety proofs, subtyping, polymorphism, type inference algorithms — provides the theoretical framework for understanding why each language's type system works the way it does |
 | General | Benjamin C. Pierce — *Advanced Topics in Types and Programming Languages* (MIT Press, 2004) | Covers dependent types, effect systems, linear types (which inspired Rust's ownership), existential types, module systems — deeper theory for understanding the cutting edge of type system design |
 
@@ -343,11 +355,11 @@ Estimated total: **16–20 hours**. One session per sub-topic. Sessions are orde
 
 | Session | Theme | Owned-Book Pages | Key External Resources |
 |---------|-------|-----------------|----------------------|
-| 1 | Primitive & scalar types | Klabnik 31–46, Blandy 43–55, Horstmann 41–52, Bloch Item 61, Valeev 96–110, Martelli 33–55, Ramalho 3–12, Gorelick 65–70 | Rust Reference types, JLS Chapter 4 + 5, Python docs built-in types + data model |
-| 2 | Composite & algebraic types | Klabnik 85–117, Blandy 193–233, Horstmann 55–82, Evans 55–77, Bloch 157–175, Ramalho 163–200, Martelli 115–135 | Rust By Example custom types, JEP 395 (Records), JEP 409 (Sealed Classes), JEP 441 (Pattern Matching), PEP 557 (dataclasses), Python enum docs |
-| 3 | Generics & parametric polymorphism | Klabnik 181–200, Blandy 235–250, Horstmann 104–116, Bloch 117–155, Martelli 171–185, Ramalho 253–280 + 519–540 | Rust Reference generics, Rustonomicon variance, JLS Chapter 4, Oracle generics tutorial, Angelika Langer FAQ, PEP 484, PEP 695 |
-| 4 | Traits, interfaces & protocols | Blandy 235–280, Klabnik 200–213, Horstmann 74–82, Evans 60–77, Bloch 175–191, Ramalho 431–486, Martelli 135–155 | Rust Reference traits + trait objects, JLS Chapter 9, JEP 409, PEP 544 (Protocols), PEP 3119 (ABCs), Python abc docs |
-| 5 | Type inference & annotations | Klabnik 31–35, Blandy 123–130, Evans 3–25, Valeev 19–40, Martelli 171–194, Ramalho 253–302 | Rust By Example inference, JEP 286 (var), JLS Chapter 18, PEP 484, PEP 526, PEP 563, mypy docs, pyright docs |
+| 1 | Primitive & scalar types | Klabnik 31–46, Blandy 43–55, Horstmann 41–52, Bloch Item 61, Valeev 96–110, Martelli 33–55, Ramalho 3–12, Gorelick 65–70, Viafore 23–33 | Rust Reference types, JLS Chapter 4 + 5, Python docs built-in types + data model |
+| 2 | Composite & algebraic types | Klabnik 85–117, Blandy 193–233, Horstmann 55–82, Evans 55–77, Bloch 157–175, Ramalho 163–200, Martelli 115–135, Viafore 111–134 | Rust By Example custom types, JEP 395 (Records), JEP 409 (Sealed Classes), JEP 441 (Pattern Matching), PEP 557 (dataclasses), Python enum docs |
+| 3 | Generics & parametric polymorphism | Klabnik 181–200, Blandy 235–250, Horstmann 104–116, Bloch 117–155, Martelli 171–185, Ramalho 253–280 + 519–540, Gjengset 19–35, Naftalin & Wadler Ch.1–3 + 5 | Rust Reference generics, Rustonomicon variance, JLS Chapter 4, Oracle generics tutorial, Angelika Langer FAQ, PEP 484, PEP 695 |
+| 4 | Traits, interfaces & protocols | Blandy 235–280, Klabnik 200–213, Horstmann 74–82, Evans 60–77, Bloch 175–191, Ramalho 431–486, Martelli 135–155, Gjengset 37–56, Viafore 187–197 | Rust Reference traits + trait objects, JLS Chapter 9, JEP 409, PEP 544 (Protocols), PEP 3119 (ABCs), Python abc docs |
+| 5 | Type inference & annotations | Klabnik 31–35, Blandy 123–130, Evans 3–25, Valeev 19–40, Martelli 171–194, Ramalho 253–302, Viafore 35–106 | Rust By Example inference, JEP 286 (var), JLS Chapter 18, PEP 484, PEP 526, PEP 563, mypy docs, pyright docs |
 | 6 | Type conversion & casting | Matthews 80–91, Blandy 130–142 + 281–301, Valeev 19–60 + 96–154, Martelli 45–55, Ramalho 201–228 + 561–590 | Rust std::convert docs, Rust By Example casting/conversion, JLS Chapter 5, Python docs built-in functions |
-| 7 | Advanced types | Klabnik 419–458, Blandy 289–295, Horstmann 110–116, Bloch 140–155, Ramalho 280–302 + 519–560 | Rustonomicon PhantomData + variance, JLS erasure + intersection types, JEP 218 (Valhalla), PEP 612 (ParamSpec), PEP 673 (Self) |
-| 8 | Nullability & option types | Klabnik 108–117, Blandy 220–230, Horstmann 70–74, Bloch Item 61, Valeev 177–212, Ramalho 260–270, Martelli 178–185 | Rust std Option + Result docs, Java Optional docs, JEP 358 (Helpful NPEs), mypy Optional docs, PEP 484 |
+| 7 | Advanced types | Klabnik 419–458, Blandy 289–295, Horstmann 110–116, Bloch 140–155, Ramalho 280–302 + 519–560, Gjengset 1–17, Naftalin & Wadler Ch.5–6, Viafore 199–210 | Rustonomicon PhantomData + variance, JLS erasure + intersection types, JEP 218 (Valhalla), PEP 612 (ParamSpec), PEP 673 (Self) |
+| 8 | Nullability & option types | Klabnik 108–117, Blandy 220–230, Horstmann 70–74, Bloch Item 61, Valeev 177–212, Ramalho 260–270, Martelli 178–185, Viafore 45–60 | Rust std Option + Result docs, Java Optional docs, JEP 358 (Helpful NPEs), mypy Optional docs, PEP 484 |
