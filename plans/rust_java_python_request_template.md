@@ -46,3 +46,10 @@ which will have content from all mentioned resources combined,
 ready for read, and with link to initial sources.
 ```
 
+# Proofreading
+
+```text
+Made a proofreading of ./overview/rust_java_python/layer_1_topic_1_philosophy_design_goals.md
+the content should be correct, there is no hallucinations, and content cover all major nuances of the topic.
+```
+
