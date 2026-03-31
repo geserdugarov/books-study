@@ -38,22 +38,39 @@
 | Python | Gorelick & Ozsvald (2020) — *High Performance Python* | Ch.1 pp. 1–20 | Understanding Performant Python — idealized computing vs Python virtual machine overhead |
 | Python | Gorelick & Ozsvald (2020) — *High Performance Python* | Ch.2 pp. 21–64 | Profiling — bytecode analysis with `dis`, cProfile, understanding the evaluation loop |
 | Python | Gorelick & Ozsvald (2020) — *High Performance Python* | Ch.7 pp. 161–211 | Compiling to C — JIT vs AOT, Cython, Numba, PyPy, ctypes, cffi, CPython extension modules |
+| Rust | McNamara (2021) — *Rust in Action* | Ch.5 pp. 137–173 | Data in Depth — bit patterns and types, integer representation, endianness, floating-point internals, CPU emulator (functions are data) |
+| Rust | McNamara (2021) — *Rust in Action* | Ch.6 pp. 175–211 | Memory — raw pointers, smart pointers, stack vs heap, dynamic memory allocation, virtual memory |
+| Rust | McNamara (2021) — *Rust in Action* | Ch.10 pp. 328–363 | Processes, Threads, and Containers — closures, thread spawning, context switching, WebAssembly, containers |
+| Rust | McNamara (2021) — *Rust in Action* | Ch.11 pp. 365–387 | Kernel — building a minimal OS (FledgeOS) in bare-metal Rust, no_std, VGA text mode, custom panic handling |
+| Rust | McNamara (2021) — *Rust in Action* | Ch.12 pp. 390–417 | Signals, Interrupts, and Exceptions — signal handling, hardware interrupts, setjmp/longjmp via FFI |
+| Java | Oaks (2020) — *Java Performance* | Ch.2 pp. 15–48 | Performance Testing — microbenchmarks, macrobenchmarks, JMH harness, throughput vs response-time measurement |
+| Java | Oaks (2020) — *Java Performance* | Ch.3 pp. 49–88 | Java Performance Toolbox — OS tools, JVM monitoring, profiling (sampling/instrumented), Java Flight Recorder |
+| Java | Oaks (2020) — *Java Performance* | Ch.4 pp. 89–120 | Working with the JIT Compiler — HotSpot C1/C2, tiered compilation, code cache, inlining, escape analysis, deoptimization, GraalVM, AOT |
+| Java | Oaks (2020) — *Java Performance* | Ch.5 pp. 121–152 | Introduction to Garbage Collection — generational GC, heap sizing, generation sizing, metaspace, GC logging |
+| Java | Oaks (2020) — *Java Performance* | Ch.6 pp. 153–201 | Garbage Collection Algorithms — Throughput collector, G1, CMS, ZGC, Shenandoah, Epsilon GC |
+| Java | Beckwith (2024) — *JVM Performance Engineering* | Ch.1 pp. 1–42 | Performance Evolution of Java — HotSpot compilation strategies (interpreter, JIT, tiered), GC foundations, Java 1.1 through Java 17 |
+| Java | Beckwith (2024) — *JVM Performance Engineering* | Ch.5 pp. 115–175 | End-to-End Performance Optimization — performance metrics, hardware-software dynamics, JMH micro-benchmarking, profiling |
+| Java | Beckwith (2024) — *JVM Performance Engineering* | Ch.6 pp. 177–217 | Advanced Memory Management and GC — TLABs/PLABs, NUMA-aware GC, G1 deep dive, ZGC, GC evaluation for OLAP/OLTP |
+| Java | Beckwith (2024) — *JVM Performance Engineering* | Ch.7 pp. 219–270 | Runtime Performance Optimizations — string interning/deduplication, lock optimization in HotSpot, virtual threads |
+| Java | Beckwith (2024) — *JVM Performance Engineering* | Ch.8 pp. 273–306 | Accelerating Time to Steady State — JVM start-up phases, CDS, AOT, GraalVM native-image, CRIU/CRaC, serverless optimization |
+| Java | Beckwith (2024) — *JVM Performance Engineering* | Ch.9 pp. 307–336 | Harnessing Exotic Hardware — GPU integration, Project Panama, TornadoVM, Vector API |
+| Python | Shaw (2021) — *CPython Internals* | pp. 42–60 | Compiling CPython — building from source on macOS/Linux/Windows, Make targets, profile-guided optimization |
+| Python | Shaw (2021) — *CPython Internals* | pp. 61–74 | The Python Language and Grammar — why C, language specification, PEG parser generator, regenerating grammar |
+| Python | Shaw (2021) — *CPython Internals* | pp. 91–117 | Lexing and Parsing — tokenizer, concrete syntax trees, abstract syntax trees, adding a new operator |
+| Python | Shaw (2021) — *CPython Internals* | pp. 118–150 | The Compiler — symbol tables, core compilation process, assembly, code objects |
+| Python | Shaw (2021) — *CPython Internals* | pp. 151–175 | The Evaluation Loop — thread state, frame objects, frame execution, value stack |
+| Python | Shaw (2021) — *CPython Internals* | pp. 177–219 | Memory Management — CPython allocator, object/PyMem domains, arena allocator, reference counting, garbage collection |
+| Python | Shaw (2021) — *CPython Internals* | pp. 221–283 | Parallelism and Concurrency — GIL, multiprocessing, multithreading, async/await internals, coroutines, subinterpreters |
 
 ### Coverage Gaps
 
 The owned books **do not** cover:
 
-- **LLVM architecture and Rust's compilation pipeline** — no book explains how `rustc` compiles through HIR → MIR → LLVM IR → machine code, or the role of LLVM optimization passes
-- **CPython internals in depth** — how the CPython interpreter works internally (tokenizer → parser → AST → bytecode compiler → evaluation loop); Martelli covers the user-facing side but not the implementation
-- **JVM specification details** — class file format binary layout, JVM instruction set specification, verification algorithm; Evans gives an overview but not the spec-level detail
-- **GraalVM and Truffle framework** — polyglot runtime, Graal JIT compiler architecture, AOT compilation via Native Image for Java
-- **Compilation pipeline stages** — lexing, parsing, AST construction, IR generation, optimization passes, and code generation as a general framework across all three languages
-- **Linking models in depth** — static vs dynamic linking mechanics, symbol resolution, shared libraries (.so/.dll/.dylib), Rust's approach to static linking with musl
-- **Ahead-of-time compilation alternatives** — GraalVM native-image for Java, Cython/mypyc/Nuitka for Python, cranelift as an alternative Rust backend
-- **WebAssembly as a compilation target** — Rust → WASM (wasm-pack, wasm-bindgen), JVM → WASM, Pyodide (Python in WASM)
-- **Startup time and cold-start optimization** — JVM warmup characteristics, CDS/AppCDS archives, Python import overhead, Rust instant-start behavior
-- **Debug vs release compilation** — what each optimization level does (`-O0` through `-O3`), debug symbols, the performance gap between debug and release builds
-- **Profile-guided optimization (PGO)** — how PGO works in rustc and the JVM (C2 compiler uses profiling data from C1)
+- **LLVM architecture and Rust's compilation pipeline** — no book explains how `rustc` compiles through HIR → MIR → LLVM IR → machine code, or the role of LLVM optimization passes; McNamara covers systems programming but not the `rustc` pipeline itself
+- **Compilation pipeline stages as a general framework** — lexing, parsing, AST construction, IR generation, optimization passes, and code generation as a unified theory across languages; Shaw covers CPython's pipeline in depth, but there is no general compiler theory textbook
+- **Linking models in depth** — static vs dynamic linking mechanics, symbol resolution, shared libraries (.so/.dll/.dylib); Matthews and McNamara touch on this but no book provides a comprehensive treatment
+- **WebAssembly as a compilation target** — Rust → WASM (wasm-pack, wasm-bindgen), JVM → WASM, Pyodide (Python in WASM); McNamara mentions WASM briefly but no book covers it in depth
+- **Debug vs release compilation** — what each optimization level does (`-O0` through `-O3`), debug symbols, the performance gap between debug and release builds; spread across multiple books but not systematically covered
 
 ---
 
@@ -176,11 +193,7 @@ The owned books **do not** cover:
 
 | Language | Book | Why |
 |----------|------|-----|
-| Rust | Tim McNamara — *Rust in Action* (Manning, 2021) | Covers systems-level details including how Rust compiles to machine code, CPU architecture interaction, memory layout, and LLVM |
-| Java | Scott Oaks — *Java Performance* (O'Reilly, 2nd ed., 2020) | Deep coverage of JVM internals: JIT compilation (C1/C2), garbage collectors (G1, ZGC, Shenandoah), JVM tuning flags, JMH benchmarking |
-| Java | Monica Beckwith — *JVM Performance Engineering* (Addison-Wesley, 2024) | Modern JVM performance: GC algorithms, JIT compilation pipeline, runtime optimizations, monitoring and diagnostics |
-| Python | Anthony Shaw — *CPython Internals* (Real Python, 2021) | The definitive guide to how CPython works: parser, AST, compiler, bytecode, evaluation loop, memory allocator, GC implementation |
-| General | Keith Cooper & Linda Torczon — *Engineering a Compiler* (Morgan Kaufmann, 3rd ed., 2022) | Compiler theory fundamentals: lexing, parsing, IRs, optimization passes, register allocation, code generation — the shared foundation underlying all three languages |
+| General | Keith Cooper & Linda Torczon — *Engineering a Compiler* (Morgan Kaufmann, 3rd ed., 2022) | Compiler theory fundamentals: lexing, parsing, IRs, optimization passes, register allocation, code generation — the shared foundation underlying all three languages; fills the general compilation pipeline gap that language-specific books do not cover |
 
 ---
 
@@ -285,10 +298,10 @@ Estimated total: **13–16 hours**. One session per sub-topic. Sessions are orde
 
 | Session | Theme | Owned-Book Pages | Key External Resources |
 |---------|-------|-----------------|----------------------|
-| 1 | Compilation models overview | Klabnik 1–11, Blandy 1–5, Horstmann Vol.I Ch.1 + 33–40, Martelli 1–19 + 21–31, Gorelick 1–20 | Rustc Dev Guide overview, JVM Spec Ch.1–2, CPython compiler design, LLVM docs, Compiler Explorer |
-| 2 | Rust compilation pipeline | Klabnik Ch.10 + 273–294, Blandy 235–263, Matthews 33–42 + 161–175 | Rustc Dev Guide (HIR, MIR, LLVM backend), Rust Reference linkage, Cargo build profiles, MIR blog post |
-| 3 | JVM compilation & execution | Evans 81–117 + 207–246 + 571–607, Horstmann Vol.II 114–126 + 140–148, Bloch generics | JVM Spec Ch.4–6, HotSpot JIT docs, GraalVM compiler + native-image, JEP 295, CDS docs |
-| 4 | Python execution model | Martelli 429–441, Ramalho Ch.2 + 695–720, Gorelick 21–64 + 161–211 | CPython compiler design, `dis` module docs, PEP 3147, PEP 659, PEP 744, PEP 703, PyPy JIT docs |
-| 5 | Runtime systems compared | Matthews 93–118, Evans 207–230 + 571–590, Martelli 429–441 | Oracle GC tuning guide, G1/ZGC docs, Python `gc` module, CDS/AppCDS docs, PEP 703 |
-| 6 | IRs & optimization | Klabnik 273–294, Matthews 219–231, Evans 230–246 + 590–607, Gorelick 45–64 | Rustc Dev Guide optimization, LLVM passes, OpenJDK C2 wiki, PEP 659, Compiler Explorer |
-| 7 | WASM, GraalVM & linking | Matthews 33–37, Blandy 525–583, Horstmann Vol.II 160–174 | Rust+WASM book, wasm-bindgen, GraalVM native-image + Truffle, JEP 454, WebAssembly spec, Pyodide, PyO3 |
+| 1 | Compilation models overview | Klabnik 1–11, Blandy 1–5, Horstmann Vol.I Ch.1 + 33–40, Martelli 1–19 + 21–31, Gorelick 1–20, Beckwith 1–42 | Rustc Dev Guide overview, JVM Spec Ch.1–2, CPython compiler design, LLVM docs, Compiler Explorer |
+| 2 | Rust compilation pipeline | Klabnik Ch.10 + 273–294, Blandy 235–263, Matthews 33–42 + 161–175, McNamara 137–173 | Rustc Dev Guide (HIR, MIR, LLVM backend), Rust Reference linkage, Cargo build profiles, MIR blog post |
+| 3 | JVM compilation & execution | Evans 81–117 + 207–246 + 571–607, Horstmann Vol.II 114–126 + 140–148, Bloch generics, Oaks 89–120, Beckwith 115–175 | JVM Spec Ch.4–6, HotSpot JIT docs, GraalVM compiler + native-image, JEP 295, CDS docs |
+| 4 | Python execution model | Martelli 429–441, Ramalho Ch.2 + 695–720, Gorelick 21–64 + 161–211, Shaw 61–175 | CPython compiler design, `dis` module docs, PEP 3147, PEP 659, PEP 744, PEP 703, PyPy JIT docs |
+| 5 | Runtime systems compared | Matthews 93–118, Evans 207–230 + 571–590, Martelli 429–441, McNamara 175–211, Oaks 121–201, Shaw 177–219 | Oracle GC tuning guide, G1/ZGC docs, Python `gc` module, CDS/AppCDS docs, PEP 703 |
+| 6 | IRs & optimization | Klabnik 273–294, Matthews 219–231, Evans 230–246 + 590–607, Gorelick 45–64, Oaks 89–120, Beckwith 177–217 | Rustc Dev Guide optimization, LLVM passes, OpenJDK C2 wiki, PEP 659, Compiler Explorer |
+| 7 | WASM, GraalVM & linking | Matthews 33–37, Blandy 525–583, Horstmann Vol.II 160–174, McNamara 328–363, Beckwith 273–336 | Rust+WASM book, wasm-bindgen, GraalVM native-image + Truffle, JEP 454, WebAssembly spec, Pyodide, PyO3 |
