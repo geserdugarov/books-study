@@ -351,7 +351,7 @@ The code cache is **segmented** into three regions:
 
 **Type erasure**: Java generics are erased at compile time. `List<String>` becomes `List<Object>` in bytecode, with cast instructions inserted by `javac`. The JVM never sees generic type parameters at runtime. This differs fundamentally from Rust's monomorphization (which generates specialized code per type) and means Java generics carry a runtime cost (casts, boxing for primitives).
 
-**invokedynamic** (added in Java 7, JEP 292) is the most important bytecode innovation since Java's creation. Unlike other invoke instructions where the target method is fixed in the constant pool, `invokedynamic` defers method resolution to a **bootstrap method** that runs the first time the call site is reached. The bootstrap method returns a `CallSite` object containing a `MethodHandle` — a direct, JIT-optimizable pointer to the target method. Subsequent calls go through the cached `CallSite` with no further bootstrap overhead.
+**invokedynamic** (added in Java 7, JSR 292) is the most important bytecode innovation since Java's creation. Unlike other invoke instructions where the target method is fixed in the constant pool, `invokedynamic` defers method resolution to a **bootstrap method** that runs the first time the call site is reached. The bootstrap method returns a `CallSite` object containing a `MethodHandle` — a direct, JIT-optimizable pointer to the target method. Subsequent calls go through the cached `CallSite` with no further bootstrap overhead.
 
 Uses of `invokedynamic`:
 - **Lambda expressions**: Each lambda is compiled to an `invokedynamic` that bootstraps a lightweight anonymous class at first invocation
