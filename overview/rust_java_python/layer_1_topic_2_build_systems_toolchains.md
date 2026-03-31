@@ -68,7 +68,7 @@ The `edition` field specifies which Rust edition the code uses (2015, 2018, 2021
 | `cargo clean` | Remove the `target/` directory |
 | `cargo search <query>` | Search crates.io |
 
-`cargo check` is notably faster than `cargo build` because it skips code generation and linking — it only runs the front-end of the compiler (parsing, type-checking, borrow-checking). For large projects the time savings are substantial.
+`cargo check` is notably faster than `cargo build` because it skips code generation and linking — it only runs the front-end of the compiler (parsing, type-checking, borrow-checking). For large projects, the time savings are substantial.
 
 Cargo follows strict conventions: source goes in `src/`, the top-level directory holds configuration files, READMEs, licenses. The binary entry point is `src/main.rs`; the library entry point is `src/lib.rs`. Tests go in `#[cfg(test)]` modules or in a `tests/` directory for integration tests.
 
@@ -890,7 +890,7 @@ cargo build --target aarch64-apple-darwin   # Cross-compile
 
 Output goes to `target/<target-triple>/debug/` (or `release/`).
 
-Rust supports **200+ target triples** covering Linux (x86_64, ARM, RISC-V), macOS (x86_64, aarch64), Windows (MSVC, GNU), WebAssembly, embedded (Cortex-M, RISC-V bare metal), and more.
+Rust supports **80+ well-supported target triples** (200+ including experimental) covering Linux (x86_64, ARM, RISC-V), macOS (x86_64, aarch64), Windows (MSVC, GNU), WebAssembly, embedded (Cortex-M, RISC-V bare metal), and more.
 
 **Static linking for maximum portability:**
 
@@ -1086,7 +1086,7 @@ Near-Cython performance with far less effort. Supports `parallel=True` with `pra
 | **Portability model** | Compile per-target | JVM (WORA) | Interpreter (pure) / wheels (extensions) |
 | **Cross-compilation** | First-class (`--target`) | Usually unnecessary (JVM) | `cibuildwheel` for C extensions |
 | **Static binary** | `musl` target | GraalVM Native Image | PyInstaller / Nuitka |
-| **Number of targets** | 80+ | Everywhere JVM runs | Everywhere Python runs |
+| **Number of targets** | 80+ (200+ with experimental) | Everywhere JVM runs | Everywhere Python runs |
 | **Native performance** | Always native | GraalVM (limited) / JIT | Cython / Numba (partial) |
 | **Build scripts** | `build.rs` | Maven/Gradle plugins | `setup.py` / build backends |
 
