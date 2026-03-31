@@ -757,7 +757,7 @@ Dependency resolution heuristics:
 - **Prefers highest available version** matching requirements
 - **SemVer unification** — if two crates require `serde "1.0"` and `serde "1.2"`, Cargo resolves to a single version satisfying both (e.g., `1.2.5`)
 - **Multiple semver-incompatible versions** — if crates require `serde 1.x` and `serde 2.x`, Cargo includes both, linked as separate crates with different symbols
-- **Lock file priority** — once locked, versions are preserved until `cargo update`
+- **Lockfile priority** — once locked, versions are preserved until `cargo update`
 
 ```bash
 cargo update              # Update all dependencies within semver ranges
