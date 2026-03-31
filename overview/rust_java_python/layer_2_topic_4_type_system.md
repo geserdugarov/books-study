@@ -49,7 +49,7 @@ Java has a dual type system — eight primitives live on the stack with no objec
 | `char` | 2 bytes (UTF-16) | `Character` | '\u0000' |
 | `boolean` | JVM-dependent | `Boolean` | false |
 
-**Autoboxing/unboxing** bridges primitives and objects but introduces subtle bugs. The `==` operator on `Integer` compares references (not values) for values outside the cached range -128..127, and unboxing a `null` boxed type throws `NullPointerException`:
+**Autoboxing/unboxing** bridges primitives and objects but introduces subtle bugs. The `==` operator on `Integer` compares references (not values) for values outside the cached range -128 to 127, and unboxing a `null` boxed type throws `NullPointerException`:
 
 ```java
 Integer a = 200;
@@ -866,7 +866,7 @@ if (obj instanceof String str) {
 }
 ```
 
-The interaction between generics type erasure and casts creates "unchecked cast" warnings that can mask actual type errors — the compiler cannot verify generic casts at runtime.
+The interaction between generic type erasure and casts creates "unchecked cast" warnings that can mask actual type errors — the compiler cannot verify generic casts at runtime.
 
 > **Sources:** Valeev (2024) Ch.2 pp. 19–60, Ch.4 pp. 96–123, Ch.5 pp. 124–154 · [JLS — Conversions and Contexts](https://docs.oracle.com/javase/specs/jls/se21/html/jls-5.html) · [JLS — Widening Primitive Conversion](https://docs.oracle.com/javase/specs/jls/se21/html/jls-5.html#jls-5.1.2) · [JLS — Narrowing Primitive Conversion](https://docs.oracle.com/javase/specs/jls/se21/html/jls-5.html#jls-5.1.3)
 
