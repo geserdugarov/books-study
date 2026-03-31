@@ -56,7 +56,7 @@ The language is spare "for good pragmatic reasons": once a language offers one g
 
 Python's consistency philosophy is deeply embedded in its **Data Model** — the set of special ("dunder") methods that enable objects to interact uniformly with language features. As Ramalho demonstrates, implementing just `__getitem__` and `__len__` on a class makes it behave like a full sequence type, supporting iteration, slicing, and the `in` operator. This consistency is Python's core design achievement.
 
-The trade-off Python makes is explicit: it sacrifices raw performance for **readability and rapid development**. As Gorelick & Ozsvald frame it: "Python is easy to learn... The trade-off between easy to develop and runs as quickly as I need is a well-understood and often-bemoaned phenomenon." The language's strength lies in enabling developers to iterate with ideas quickly and produce correct, maintainable code.
+The tradeoff Python makes is explicit: it sacrifices raw performance for **readability and rapid development**. As Gorelick & Ozsvald frame it: "Python is easy to learn... The trade-off between easy to develop and runs as quickly as I need is a well-understood and often-bemoaned phenomenon." The language's strength lies in enabling developers to iterate with ideas quickly and produce correct, maintainable code.
 
 > **Sources:** Martelli et al (2023) Ch.1 pp. 1–19 · Ramalho (2022) Ch.1 pp. 3–20 · Gorelick & Ozsvald (2020) Ch.1 pp. 1–20 · [PEP 20](https://peps.python.org/pep-0020/) · [Python FAQ](https://docs.python.org/3/faq/general.html) · [Guido's "History of Python" blog](https://python-history.blogspot.com/)
 
