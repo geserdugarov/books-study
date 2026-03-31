@@ -24,7 +24,7 @@ The Rustc Dev Guide describes the compiler as a query-based system rather than a
 
 Rust's compilation model is similar to C and C++ — the compiler sees the whole program (or crate) and produces optimized native code. The key difference is that Rust's compiler enforces memory safety and thread safety at compile time, eliminating entire classes of bugs that plague C/C++ programs without adding any runtime overhead.
 
-> **Sources:** Klabnik & Nichols (2023) Ch.1 pp. 1–11 · Blandy & Orendorff (2017) Ch.1 pp. 1–5 · [Rustc Dev Guide — Overview](https://rustc-dev-guide.rust-lang.org/overview.html)
+> **Sources:** Klabnik & Nichols (2023) Ch.1 pp. 1–11 · Blandy & Orendorff (2017) Ch.1 pp. 1–5 · McNamara (2021) Ch.5 pp. 137–173 · [Rustc Dev Guide — Overview](https://rustc-dev-guide.rust-lang.org/overview.html)
 
 ### Java: Two-Stage Compilation with JIT
 
@@ -43,7 +43,7 @@ The JIT compilation process is adaptive. HotSpot (the standard JVM implementatio
 
 This adaptive approach means Java programs get faster over time as the JIT learns which code paths are hot and what types flow through them. The tradeoff is startup overhead: the JVM must initialize, load classes, verify bytecode, and warm up the JIT before reaching peak performance.
 
-> **Sources:** Horstmann (2024) Vol. I Ch.1, Ch.2 pp. 33–40 · Evans et al (2022) Ch.7 pp. 207–246 · [JVM Spec Ch.1](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-1.html) · [Oracle — HotSpot VM Performance](https://docs.oracle.com/en/java/javase/21/vm/java-hotspot-virtual-machine-performance-enhancements.html)
+> **Sources:** Horstmann (2024) Vol. I Ch.1, Ch.2 pp. 33–40 · Evans et al (2022) Ch.7 pp. 207–246 · Oaks (2020) Ch.4 pp. 89–120 · Beckwith (2024) Ch.1 pp. 1–42 · [JVM Spec Ch.1](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-1.html) · [Oracle — HotSpot VM Performance](https://docs.oracle.com/en/java/javase/21/vm/java-hotspot-virtual-machine-performance-enhancements.html)
 
 ### Python: Compiled Bytecode, Interpreted Execution
 
@@ -59,7 +59,7 @@ Unlike Java's JVM, the CPython bytecode interpreter does not JIT-compile hot cod
 
 Python 3.11+ introduced a **specializing adaptive interpreter** (PEP 659) that replaces generic bytecodes with type-specialized versions at runtime — a limited form of runtime optimization. Python 3.13+ adds an experimental **copy-and-patch JIT compiler** (PEP 744), and a **free-threaded build** without the GIL (PEP 703). Alternative implementations like **PyPy** provide a full tracing JIT compiler, achieving 4–10x speedup over CPython for long-running programs.
 
-> **Sources:** Martelli et al (2023) Ch.1 pp. 1–19, Ch.2 pp. 21–31 · Gorelick & Ozsvald (2020) Ch.1 pp. 1–20 · [CPython Developer Guide — Compiler Design](https://devguide.python.org/internals/compiler/) · [PEP 659](https://peps.python.org/pep-0659/)
+> **Sources:** Martelli et al (2023) Ch.1 pp. 1–19, Ch.2 pp. 21–31 · Gorelick & Ozsvald (2020) Ch.1 pp. 1–20 · Shaw (2021) pp. 61–74, 118–150 · [CPython Developer Guide — Compiler Design](https://devguide.python.org/internals/compiler/) · [PEP 659](https://peps.python.org/pep-0659/)
 
 ### Comparison Matrix
 
@@ -345,7 +345,7 @@ The code cache is **segmented** into three regions:
 
 **Compact Strings (Java SE 9+)**: Changed `String` internal representation from UTF-16 `char[]` to `byte[]` + encoding flag. Latin-1 characters stored as 1 byte instead of 2, saving ~50% memory for most strings.
 
-> **Sources:** Evans et al (2022) Ch.7 pp. 207–246 · [Oracle — HotSpot VM Performance](https://docs.oracle.com/en/java/javase/21/vm/java-hotspot-virtual-machine-performance-enhancements.html)
+> **Sources:** Evans et al (2022) Ch.7 pp. 207–246 · Oaks (2020) Ch.4 pp. 89–120 · Beckwith (2024) Ch.5 pp. 115–175 · [Oracle — HotSpot VM Performance](https://docs.oracle.com/en/java/javase/21/vm/java-hotspot-virtual-machine-performance-enhancements.html)
 
 ### Type Erasure, invokedynamic, and Modern Internals
 
@@ -413,7 +413,29 @@ Native Image operates under the **closed-world assumption**: all bytecode callab
 
 **JEP 295 (jaotc)** was an earlier experimental AOT approach in JDK 9: the `jaotc` tool produced shared libraries (`.so`) using Graal as the code-generating backend. These AOT libraries were treated as an extension of the CodeCache at runtime. A class fingerprinting mechanism validated that bytecode hadn't changed since AOT compilation. Two modes were supported: non-tiered (behaves like statically compiled C++ code) and tiered (collects profiling for later C2 recompilation). This experiment was later superseded by GraalVM Native Image.
 
-> **Sources:** Evans et al (2022) Ch.7 pp. 230–246 · [GraalVM — Compiler](https://www.graalvm.org/latest/reference-manual/java/compiler/) · [GraalVM — Native Image](https://www.graalvm.org/latest/reference-manual/native-image/) · [Oracle — CDS](https://docs.oracle.com/en/java/javase/21/vm/class-data-sharing.html) · [JEP 295](https://openjdk.org/jeps/295)
+> **Sources:** Evans et al (2022) Ch.7 pp. 230–246 · Oaks (2020) Ch.4 pp. 115–120 · Beckwith (2024) Ch.8 pp. 273–306 · [GraalVM — Compiler](https://www.graalvm.org/latest/reference-manual/java/compiler/) · [GraalVM — Native Image](https://www.graalvm.org/latest/reference-manual/native-image/) · [Oracle — CDS](https://docs.oracle.com/en/java/javase/21/vm/class-data-sharing.html) · [JEP 295](https://openjdk.org/jeps/295)
+
+### Performance Testing and Monitoring
+
+Effective Java performance work requires rigorous measurement methodology. The **Java Microbenchmark Harness (JMH)** is the standard tool for writing correct microbenchmarks. JMH is critical because naive benchmarks in Java produce misleading results — dead-code elimination, constant folding, and JIT warmup make hand-rolled timing loops unreliable.
+
+JMH provides annotations to control benchmark execution:
+- `@Benchmark` marks benchmark methods
+- `@Fork` controls JVM process isolation (each fork is a fresh JVM — eliminates profile pollution)
+- `@Warmup` and `@Measurement` specify iteration counts and duration
+- `@BenchmarkMode` selects throughput, average time, sample time, or single-shot measurement
+- `@OperationsPerInvocation` corrects for loop-based benchmarks
+
+Performance testing exists at three scales: **microbenchmarks** (isolated operations, JMH), **mesobenchmarks** (multi-threaded subsystem tests), and **macrobenchmarks** (full application under realistic load). Oaks argues that mesobenchmarks often provide the best signal for real-world performance decisions, as microbenchmarks can be dominated by JIT artifacts and macrobenchmarks are difficult to isolate.
+
+Beckwith identifies four key **performance metrics**: **footprint** (memory consumption including heap, native, and off-heap), **responsiveness** (latency at various percentiles — p50, p99, p99.9), **throughput** (operations per unit time), and **availability** (uptime under load). A systematic performance engineering methodology combines top-down analysis (start from user-visible symptoms, trace to root cause) with bottom-up analysis (start from hardware counters, identify resource bottlenecks).
+
+**Java Flight Recorder (JFR)** enables production-safe profiling with minimal overhead (typically < 2%). JFR collects events — method profiling, GC activity, thread states, I/O operations, class loading — into a ring buffer that can be dumped on demand or streamed. **Java Mission Control (JMC)** provides a GUI for analyzing JFR recordings. Key JFR capabilities:
+- Continuous recording with configurable event thresholds
+- Selectable event categories (GC, compiler, threads, I/O, etc.)
+- Post-hoc analysis without needing to reproduce the issue
+
+> **Sources:** Oaks (2020) Ch.2 pp. 15–48, Ch.3 pp. 49–88 · Beckwith (2024) Ch.5 pp. 115–175
 
 ---
 
@@ -452,7 +474,7 @@ code = compile("x + 1", "<string>", "eval")  # Returns a code object
 exec(code)                                      # Executes the code object
 ```
 
-> **Sources:** Martelli et al (2023) Ch.14 pp. 429–441 · [CPython Developer Guide — Compiler Design](https://devguide.python.org/internals/compiler/)
+> **Sources:** Martelli et al (2023) Ch.14 pp. 429–441 · Shaw (2021) pp. 61–150 · [CPython Developer Guide — Compiler Design](https://devguide.python.org/internals/compiler/)
 
 ### Bytecode and the Evaluation Loop
 
@@ -491,7 +513,14 @@ The `Instruction` named tuple provides detailed information: `opcode`, `opname`,
 
 The `dis` module provides: `dis.dis()` (disassemble functions/classes/modules), `dis.get_instructions()` (iterator of `Instruction` tuples), `dis.code_info()` (code object metadata), `dis.stack_effect()` (compute stack effect of an opcode), and the `dis.Bytecode` class for programmatic analysis.
 
-> **Sources:** Ramalho (2022) Ch.2 · Gorelick & Ozsvald (2020) Ch.2 pp. 21–45 · [Python docs — `dis` module](https://docs.python.org/3/library/dis.html)
+**The evaluation loop internals** (`Python/ceval.c`) are the heart of CPython. Shaw describes the execution machinery in detail:
+
+- **Thread state** (`PyThreadState`): Each OS thread running Python has a thread state object containing the current frame, exception state, and a pointer to the interpreter state. Thread states are linked in a per-interpreter list.
+- **Frame objects** (`PyFrameObject`): Each function call creates a frame. A frame contains: a pointer to its code object, local variables array, the value stack, a pointer to the enclosing frame (forming a call chain), and the current bytecode instruction pointer. Closure variables use `co_freevars` (referencing enclosing scope) and `co_cellvars` (referenced by inner scope).
+- **The value stack**: Bytecode instructions operate on a per-frame LIFO stack. `LOAD_FAST` pushes a local variable onto the stack; `BINARY_ADD` pops two values, adds them, and pushes the result. The maximum stack depth is computed at compile time (`co_stacksize`).
+- **Frame execution cycle**: The main loop in `_PyEval_EvalFrameDefault()` fetches the next opcode, dispatches through a giant switch statement (or computed goto on supported platforms), executes the operation, and advances the instruction pointer. On every iteration, the loop checks for pending signals, thread switches (every 5ms by default), and async exceptions.
+
+> **Sources:** Ramalho (2022) Ch.2 · Gorelick & Ozsvald (2020) Ch.2 pp. 21–45 · Shaw (2021) pp. 151–175 · [Python docs — `dis` module](https://docs.python.org/3/library/dis.html)
 
 ### .pyc Files and Caching
 
@@ -566,6 +595,8 @@ The `--disable-gil` build flag produces a **free-threaded** CPython build (ABI t
 
 5. **`Py_mod_gil` Slot**: C extension modules declare GIL requirements. Non-thread-safe extensions can request the GIL be held.
 
+**Subinterpreters** (PEP 554, experimental): CPython supports running multiple independent Python interpreters within a single OS process. Each subinterpreter has its own module namespace, import state, and — crucially — its own GIL. This enables true parallelism for Python code without the complexity of multiprocessing (no serialization overhead for communication). Shaw describes subinterpreters as a middle ground between threads (shared GIL) and processes (separate memory spaces). The `interpreters` module (Python 3.12+) exposes this capability, though it remains experimental with restrictions on sharing objects between interpreters.
+
 **Alternative Python implementations**:
 
 **PyPy** uses a **meta-tracing JIT** — it traces the RPython interpreter itself, not the user's Python program directly. The RPython toolchain translates RPython source into C code (via flow graphs and annotation), which is compiled to a native binary. The tracer records execution traces, the optimizer optimizes residual operations, and the backend generates native machine code. PyPy generally achieves 4–10x speedup over CPython for long-running programs. PyPy uses real GC (not reference counting) — the `incminimark` (incremental minimark) collector.
@@ -591,7 +622,7 @@ Architecture:
 
 Why copy-and-patch over LLVM: LLVM would add heavy runtime dependencies and high compilation overhead. Copy-and-patch requires ~900 lines of build-time Python + ~500 lines of runtime C. It eliminates dispatch overhead between micro-ops, instruction decoding overhead, and memory traffic. Must be enabled with `--enable-experimental-jit` at build time; not yet default.
 
-> **Sources:** Ramalho (2022) Ch.19 pp. 695–742 · Gorelick & Ozsvald (2020) Ch.7 pp. 161–211 · [PEP 703](https://peps.python.org/pep-0703/) · [PEP 744](https://peps.python.org/pep-0744/) · [PyPy documentation](https://doc.pypy.org/)
+> **Sources:** Ramalho (2022) Ch.19 pp. 695–742 · Gorelick & Ozsvald (2020) Ch.7 pp. 161–211 · Shaw (2021) pp. 221–283 · [PEP 703](https://peps.python.org/pep-0703/) · [PEP 744](https://peps.python.org/pep-0744/) · [PyPy documentation](https://doc.pypy.org/)
 
 ---
 
@@ -637,6 +668,16 @@ ZGC provides sub-millisecond pause times regardless of heap size (tested up to 1
 
 Amdahl's Law impact: 1% GC time on a single processor translates to >20% throughput loss at 32 processors.
 
+**Thread-Local Allocation Buffers (TLABs)**: To avoid lock contention on Eden space, each thread gets its own **TLAB** — a private allocation region within the young generation. Object allocation within a TLAB is a simple pointer bump (no synchronization). When a TLAB is exhausted, the thread requests a new one. **Promotion-Local Allocation Buffers (PLABs)** serve the same purpose during GC — each GC thread gets a private buffer in the old generation to avoid contention when promoting surviving objects. TLABs are sized dynamically based on allocation rate and thread count.
+
+**G1 internals**: G1 divides the heap into equally-sized **regions** (1–32 MB each, configurable with `-XX:G1HeapRegionSize`). Each region can be Eden, Survivor, Old, or Humongous (objects > 50% of region size). G1 tracks **remembered sets** per region to avoid scanning the entire heap during young collection. Mixed collections select old-generation regions based on a **garbage-first priority** — regions with the most reclaimable space are collected first. Key tuning parameters include `-XX:MaxGCPauseMillis` (target pause, default 200ms), `-XX:G1MixedGCCountTarget` (target number of mixed GCs), and `-XX:G1HeapWastePercent` (stop mixed GC when waste drops below threshold).
+
+**ZGC architecture**: ZGC uses **colored pointers** — metadata is stored in unused bits of 64-bit object references (using multi-mapping of virtual memory). A **load barrier** intercepts every object reference load to check pointer color and perform any necessary remapping or marking. This design enables fully concurrent marking, relocation, and reference processing without stop-the-world pauses beyond a brief (< 1ms) root scanning phase. ZGC supports heap sizes from 8 MB to 16 TB. Since Java 21, ZGC is **generational** (`-XX:+ZGenerational`), applying the generational hypothesis for improved throughput.
+
+**Shenandoah** is Red Hat's concurrent GC with a similar goal to ZGC — sub-millisecond pauses — but uses a **Brooks forwarding pointer** (an extra word per object) rather than colored pointers. **Epsilon** (`-XX:+UseEpsilonGC`) is a no-op collector that never reclaims memory — useful for ultra-short-lived processes, benchmarking GC overhead, and memory pressure testing.
+
+**GC workload evaluation**: The optimal GC choice depends on the workload type. Beckwith categorizes: **OLTP** (many short transactions — latency-sensitive, G1 or ZGC), **OLAP** (batch analytical queries — throughput-sensitive, Parallel collector), and **HTAP** (mixed transactional + analytical — balanced, G1). Data lifespan patterns also matter — long-lived caches stress old-generation collection; request-scoped allocations die in young generation.
+
 **Python: Reference Counting + Cycle Collector**
 
 CPython uses **reference counting** as its primary memory management mechanism. Every object has a reference count (`ob_refcnt`). When the count drops to zero, the object is immediately deallocated. This provides deterministic destruction — objects are freed as soon as they become unreachable (similar to Rust's RAII for simple cases).
@@ -652,7 +693,19 @@ gc.get_threshold()   # Collection thresholds (700, 10, 10) by default
 
 The cycle collector uses generational collection with three generations. New objects start in generation 0; surviving objects are promoted.
 
-> **Sources:** Matthews (2024) Ch.5 pp. 93–118 · Evans et al (2022) Ch.7 pp. 207–230 · Martelli et al (2023) Ch.14 pp. 436–441 · [Oracle — GC Tuning Guide](https://docs.oracle.com/en/java/javase/21/gctuning/) · [Python docs — `gc` module](https://docs.python.org/3/library/gc.html)
+**CPython's memory allocator architecture** (Shaw) has three layered domains:
+
+| Domain | Scope | Mechanism |
+|--------|-------|-----------|
+| **Raw** | General-purpose | Thin wrapper around `malloc`/`free` |
+| **PyMem** | Python runtime | Used for non-object memory (buffers, internal arrays) |
+| **Object** | Python objects | Specialized allocator for small objects (< 512 bytes) |
+
+The **object domain allocator** organizes memory into **arenas** (256 KB chunks obtained from the OS), which contain **pools** (4 KB, matching the OS page size), which contain fixed-size **blocks** for objects of a specific size class. Size classes are 8-byte aligned from 8 to 512 bytes. This three-tier hierarchy minimizes `malloc` overhead for the millions of small objects a typical Python program creates. The **PyArena** allocator is a separate arena used specifically for compilation artifacts (AST nodes, symbol tables) — it allows bulk deallocation when compilation completes.
+
+Reference counting uses `Py_INCREF(op)` and `Py_DECREF(op)` macros that directly manipulate the `ob_refcnt` field on every `PyObject`. When `ob_refcnt` reaches zero, the object's type-specific deallocator is called immediately. The cycle collector's generational algorithm uses three generations with configurable thresholds (default: 700, 10, 10) — generation 0 is collected when 700 more allocations than deallocations have occurred; generations 1 and 2 are collected after 10 collections of the previous generation.
+
+> **Sources:** Matthews (2024) Ch.5 pp. 93–118 · McNamara (2021) Ch.6 pp. 175–211 · Evans et al (2022) Ch.7 pp. 207–230 · Oaks (2020) Ch.5–6 pp. 121–201 · Beckwith (2024) Ch.6 pp. 177–217 · Martelli et al (2023) Ch.14 pp. 436–441 · Shaw (2021) pp. 177–219 · [Oracle — GC Tuning Guide](https://docs.oracle.com/en/java/javase/21/gctuning/) · [Python docs — `gc` module](https://docs.python.org/3/library/gc.html)
 
 ### Startup Time and Warmup Behavior
 
@@ -665,14 +718,17 @@ The cycle collector uses generational collection with three generations. New obj
 
 **Rust**: Binaries start in microseconds — there is no runtime to initialize. The program begins executing `main()` immediately. This makes Rust ideal for CLI tools and serverless functions where cold-start latency matters.
 
-**Java**: Significant startup overhead from JVM initialization, class loading (hundreds to thousands of classes), bytecode verification, and JIT warmup. Mitigations:
+**Java**: Beckwith describes the JVM lifecycle as four phases: **boot** (JVM process starts, loads core classes), **initialization** (application classes loaded, static initializers run), **ramp-up** (JIT compiling hot methods, profiling stabilizing), and **steady state** (peak performance reached, code caches warm). The time to steady state can be seconds for simple applications or minutes for complex frameworks — this is the "warmup" problem.
+
+Mitigations for startup and warmup:
 - **CDS/AppCDS**: Memory-maps pre-processed class metadata from shared archives. Multiple JVM processes share the same archive. Dynamic CDS automatically archives loaded classes at exit.
 - **GraalVM Native Image**: Eliminates JVM startup entirely — the result is a native binary like Rust
+- **CRIU and Project CRaC**: Checkpoint/Restore In Userspace (CRIU) snapshots a running JVM process to disk; restoring from checkpoint provides near-instant startup. **Project CRaC** (Coordinated Restore at Checkpoint) provides a Java API for applications to prepare for checkpoint (e.g., close network connections, flush buffers) and reinitialize on restore. This is particularly valuable for serverless platforms where cold-start latency directly impacts user experience.
 - **Project Leyden** (future): Aims to progressively "condense" Java programs by shifting work from run time to earlier phases
 
 **Python**: Moderate startup from interpreter initialization and `import` chains. Heavy frameworks (Django, NumPy) can add seconds of import time. Mitigations: `__pycache__/` avoids recompilation; lazy imports (`from __future__ import annotations`); `importlib.resources` for efficient resource loading.
 
-> **Sources:** [Oracle — CDS](https://docs.oracle.com/en/java/javase/21/vm/class-data-sharing.html) · [GraalVM — Native Image](https://www.graalvm.org/latest/reference-manual/native-image/)
+> **Sources:** Beckwith (2024) Ch.8 pp. 273–306 · [Oracle — CDS](https://docs.oracle.com/en/java/javase/21/vm/class-data-sharing.html) · [GraalVM — Native Image](https://www.graalvm.org/latest/reference-manual/native-image/)
 
 ### Runtime Reflection and Introspection
 
@@ -712,7 +768,21 @@ m.invoke(obj, "arg");
 
 The fundamental tradeoff: **Rust trades runtime flexibility for predictable performance**; **Java trades startup time for adaptive optimization**; **Python trades performance for maximum dynamism**.
 
-> **Sources:** Evans et al (2022) Ch.17 pp. 571–590 · Martelli et al (2023) Ch.14 pp. 429–435 · Matthews (2024) Ch.5 pp. 93–118
+> **Sources:** Evans et al (2022) Ch.17 pp. 571–590 · Martelli et al (2023) Ch.14 pp. 429–435 · Matthews (2024) Ch.5 pp. 93–118 · McNamara (2021) Ch.10 pp. 328–363 · Shaw (2021) pp. 221–283
+
+### JVM Runtime Optimizations: Strings, Locks, and Virtual Threads
+
+Beyond GC and JIT compilation, the HotSpot JVM applies several important runtime optimizations.
+
+**String optimization** has evolved across Java versions. **Compact Strings** (Java 9+) changed `String` internals from `char[]` (UTF-16, 2 bytes per character) to `byte[]` with an encoding flag — Latin-1 strings use 1 byte per character, roughly halving memory for most strings. **String interning** (`String.intern()`) and the JVM's string constant pool deduplicate identical string literals. G1 GC offers **automatic string deduplication** (`-XX:+UseStringDeduplication`) that identifies duplicate `char[]`/`byte[]` arrays across the heap and shares them — Beckwith reports this can reduce heap usage by 10–25% in string-heavy applications.
+
+**Lock evolution in HotSpot** uses an adaptive escalation strategy. When a `synchronized` block is entered, the JVM first attempts **biased locking** — if only one thread ever acquires the lock, it simply stores the thread ID with near-zero overhead. If a second thread contends, the lock **revokes bias** and escalates to a **thin lock** (CAS-based spinlock using the object header's mark word). If spin attempts fail (high contention), the lock escalates to a **fat lock** (OS mutex with thread parking). Java 15 deprecated biased locking by default, as modern concurrent code rarely benefits from it and the revocation cost is high. Post-Java 9, contention optimization improvements include adaptive spin-wait hints and refined lock escalation thresholds.
+
+**Virtual threads** (Project Loom, Java 21+) are lightweight, JVM-managed threads that decouple the Java thread abstraction from OS threads. A virtual thread is mounted on a **carrier thread** (from a ForkJoinPool) only while it is executing CPU work. When a virtual thread blocks on I/O, the JVM unmounts it from the carrier — freeing the carrier to run another virtual thread. This enables millions of concurrent virtual threads on a handful of OS threads.
+
+The transition from the traditional **thread-per-request** model (one OS thread per incoming request, limited to ~10K concurrent connections) to virtual threads eliminates the need for reactive/async programming patterns in many cases. Virtual threads make `Thread.sleep()`, `Socket.read()`, and `Lock.lock()` cheap — they block the virtual thread but not the carrier, maintaining the familiar synchronous programming model while achieving the scalability of async I/O.
+
+> **Sources:** Beckwith (2024) Ch.7 pp. 219–270
 
 ---
 
@@ -769,7 +839,7 @@ Note: HotSpot does NOT do true stack allocation for non-escaping objects — it 
 
 **invokedynamic optimization**: Evans describes how string concatenation was migrated from `StringBuilder` chains to `invokedynamic` (Java 9+). The bootstrap method chooses the optimal concatenation strategy at runtime — potentially using `byte[]` instead of `char[]`, pre-sizing buffers, or using specialized fast paths for common patterns. The JIT then inlines the result.
 
-> **Sources:** Evans et al (2022) Ch.7 pp. 230–246, Ch.17 pp. 590–607 · [OpenJDK — C2 Compiler](https://wiki.openjdk.org/display/HotSpot/C2)
+> **Sources:** Evans et al (2022) Ch.7 pp. 230–246, Ch.17 pp. 590–607 · Oaks (2020) Ch.4 pp. 89–120 · Beckwith (2024) Ch.7 pp. 219–270 · [OpenJDK — C2 Compiler](https://wiki.openjdk.org/display/HotSpot/C2)
 
 ### Python Bytecode and Limited Optimization
 
@@ -809,7 +879,7 @@ Using [Compiler Explorer (godbolt.org)](https://godbolt.org/), you can compare t
 | **Java** | Source → AST → Bytecode → Interpreted / C1 Assembly / C2 Assembly |
 | **Python** | Source → AST → CFG → Bytecode → Interpreted (adaptive/specialized) |
 
-> **Sources:** Gorelick & Ozsvald (2020) Ch.2 pp. 45–64 · [PEP 659](https://peps.python.org/pep-0659/) · [Compiler Explorer](https://godbolt.org/)
+> **Sources:** Gorelick & Ozsvald (2020) Ch.2 pp. 45–64 · Shaw (2021) pp. 118–150 · [PEP 659](https://peps.python.org/pep-0659/) · [Compiler Explorer](https://godbolt.org/)
 
 ---
 
@@ -975,6 +1045,24 @@ PyO3 is used by Pydantic v2, Polars, Ruff, and cryptography to expose Rust code 
 | **Deployment unit** | Single binary (1–10 MB) | JAR + JVM (50–200 MB) | Source/wheel + interpreter (~15 MB) |
 | **Cross-language bridge** | PyO3 (Python), wasm-bindgen (JS) | FFM API, GraalVM polyglot | PyO3 (Rust), ctypes (C) |
 
+### Exotic Hardware and Accelerators
+
+Beckwith explores the emerging frontier of JVM integration with specialized hardware — GPUs, FPGAs, and vector processors.
+
+**TornadoVM** is a specialized JVM that automatically offloads annotated Java code to GPUs and FPGAs via OpenCL or PTX backends. It intercepts bytecode at runtime, builds a parallel task graph, and generates hardware-specific kernels — enabling GPU acceleration without leaving Java.
+
+**Project Panama's Vector API** (incubating) provides portable SIMD (Single Instruction, Multiple Data) operations in Java. The Vector API maps to hardware vector registers (AVX-512, ARM NEON) and allows explicit data-parallel programming:
+```java
+var a = FloatVector.fromArray(SPECIES_256, arrayA, i);
+var b = FloatVector.fromArray(SPECIES_256, arrayB, i);
+var c = a.mul(b).add(a);  // Fused multiply-add, 8 floats at once
+c.intoArray(result, i);
+```
+
+Earlier efforts include **Aparapi** (translating Java bytecode to OpenCL at runtime) and **Project Sumatra** (transparently offloading Stream operations to GPUs). These demonstrated the potential but were limited by the impedance mismatch between Java's object model and GPU programming. **Project Panama** represents the current approach — providing low-level memory access and foreign function calls that enable idiomatic Java wrappers around native GPU libraries (CUDA, OpenCL) without JNI overhead.
+
+> **Sources:** Beckwith (2024) Ch.9 pp. 307–336
+
 ### Cross-Language Interop and Future Directions
 
 The boundaries between languages are increasingly blurred:
@@ -986,7 +1074,7 @@ The boundaries between languages are increasingly blurred:
 
 The trend is toward **compilation-time interop** (Rust→Python via PyO3, Rust→WASM→JS) rather than runtime interop (JNI, ctypes). Compilation-time binding eliminates IPC overhead and enables the optimizer to inline across language boundaries.
 
-> **Sources:** Matthews (2024) Ch.2 pp. 33–37 · Blandy & Orendorff (2017) Ch.21 pp. 525–583 · Horstmann (2024) Vol. II Ch.13 pp. 160–174 · [Rust Reference — Linkage](https://doc.rust-lang.org/reference/linkage.html) · [JEP 454](https://openjdk.org/jeps/454) · [PyO3](https://pyo3.rs/) · [Pyodide](https://pyodide.org/)
+> **Sources:** Matthews (2024) Ch.2 pp. 33–37 · McNamara (2021) Ch.12 pp. 390–417 · Blandy & Orendorff (2017) Ch.21 pp. 525–583 · Horstmann (2024) Vol. II Ch.13 pp. 160–174 · [Rust Reference — Linkage](https://doc.rust-lang.org/reference/linkage.html) · [JEP 454](https://openjdk.org/jeps/454) · [PyO3](https://pyo3.rs/) · [Pyodide](https://pyodide.org/)
 
 ---
 
@@ -1007,6 +1095,10 @@ The trend is toward **compilation-time interop** (Rust→Python via PyO3, Rust�
 | Martelli et al (2023) — *Python in a Nutshell* | Ch.1 pp. 1–19, Ch.2 pp. 21–31, Ch.14 pp. 429–441 | `books/Python/Martelli et al 2023 Python in a nutshell.pdf` |
 | Ramalho (2022) — *Fluent Python* | Ch.2, Ch.19 pp. 695–742 | `books/Python/Ramalho 2022 Fluent Python.pdf` |
 | Gorelick & Ozsvald (2020) — *High Performance Python* | Ch.1 pp. 1–20, Ch.2 pp. 21–64, Ch.7 pp. 161–211 | `books/Python/Gorelick, Ozsvald 2020 High performance Python.pdf` |
+| McNamara (2021) — *Rust in Action* | Ch.5 pp. 137–173, Ch.6 pp. 175–211, Ch.10 pp. 328–363, Ch.11 pp. 365–387, Ch.12 pp. 390–417 | `books/Rust/McNamara 2021 Rust in Action.pdf` |
+| Oaks (2020) — *Java Performance* | Ch.2 pp. 15–48, Ch.3 pp. 49–88, Ch.4 pp. 89–120, Ch.5 pp. 121–152, Ch.6 pp. 153–201 | `books/Java/Oaks 2020 Java performance.pdf` |
+| Beckwith (2024) — *JVM Performance Engineering* | Ch.1 pp. 1–42, Ch.5 pp. 115–175, Ch.6 pp. 177–217, Ch.7 pp. 219–270, Ch.8 pp. 273–306, Ch.9 pp. 307–336 | `books/Java/Beckwith 2024 JVM performance engineering.pdf` |
+| Shaw (2021) — *CPython Internals* | pp. 42–60, 61–74, 91–150, 151–175, 177–219, 221–283 | `books/Python/Shaw 2020 CPython internals.pdf` |
 
 ### External Resources
 
