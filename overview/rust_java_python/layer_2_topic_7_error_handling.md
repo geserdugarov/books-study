@@ -32,7 +32,7 @@ fn main() {
 }
 ```
 
-The Rust Book describes this as making "error handling a first-class part of your program's logic rather than an afterthought." The compiler refuses to compile code that ignores a `Result` — you must explicitly handle, propagate, or discard the error.
+The Rust Book describes this as making "error handling a first-class part of your program's logic rather than an afterthought." The compiler warns when code ignores a `Result` — you must explicitly handle, propagate, or discard the error.
 
 > **Sources:** Klabnik & Nichols (2023) Ch.9 pp. 161–163 · Blandy & Orendorff (2017) Ch.7 pp. 145–148 · [Rust Book — Error Handling](https://doc.rust-lang.org/book/ch09-00-error-handling.html) · [Rust By Example — Error handling](https://doc.rust-lang.org/rust-by-example/error.html) · [Andrew Gallant — "Error Handling in Rust"](https://blog.burntsushi.net/rust-error-handling/)
 
@@ -145,7 +145,7 @@ Python has **no checked exceptions** — all exceptions are unchecked. There is 
 
 The fundamental mechanisms: `Result<T, E>` with `match`/`unwrap`/`expect` in Rust, `try`/`catch`/`finally` in Java, and `try`/`except`/`else`/`finally` in Python.
 
-### Rust: Result<T, E> and Option<T>
+### Rust: `Result<T, E>` and `Option<T>`
 
 `Result<T, E>` is an enum defined in the standard library:
 
@@ -245,7 +245,7 @@ try {
 - **Catch order matters** — more specific exceptions must come before more general ones. `catch (IOException e)` before `catch (FileNotFoundException e)` is a compile-time error (FileNotFoundException is unreachable).
 - **Multi-catch** (Java 7+) handles multiple unrelated exceptions: `catch (IOException | SQLException e)`. The catch parameter is effectively `final`.
 - **finally always executes** — even if `try` or `catch` contains `return`. But if `finally` contains `return`, it overrides any prior `return`. If `finally` throws, the original exception is **lost** (this is a critical flaw fixed by try-with-resources).
-- **Polymorphic catching** — `catch (Exception e)` catches all exceptions including their subclasses. This is the Java equivalent of Python's `except Exception:`.
+- **Polymorphic catching** — `catch (Exception e)` catches `Exception` and all its subclasses. This is the Java equivalent of Python's `except Exception:`.
 
 **Common anti-patterns** identified by Bloch and Valeev:
 
@@ -546,7 +546,7 @@ The `?` operator is Rust's primary error propagation mechanism. It is syntactic 
 ```rust
 // Without ? — verbose match chains
 fn read_username() -> Result<String, io::Error> {
-    let file = match File::open("username.txt") {
+    let mut file = match File::open("username.txt") {
         Ok(f) => f,
         Err(e) => return Err(e),
     };
@@ -746,7 +746,7 @@ Rust's RAII (Resource Acquisition Is Initialization) model makes error handling 
 
 ```rust
 fn process_file(path: &str) -> Result<String, io::Error> {
-    let file = File::open(path)?;        // File acquired
+    let mut file = File::open(path)?;     // File acquired
     let mut contents = String::new();
     // If read_to_string fails and ? returns early,
     // `file` is dropped automatically, closing the file descriptor
@@ -811,7 +811,7 @@ try (FileReader reader = new FileReader("file.txt");
     String line = br.readLine();
     // Multiple resources: closed in reverse declaration order
 }
-// reader.close() and br.close() called automatically
+// br.close() and reader.close() called automatically
 ```
 
 Resources must implement `AutoCloseable` (or its subinterface `Closeable`). When both the try block and `close()` throw exceptions, the try-block exception is the primary one, and the close() exception is added as a **suppressed exception**:
