@@ -175,7 +175,7 @@ fn main() {
 
 **Ownership forms a tree** (Blandy & Orendorff): at the root is a variable; the tree includes structs, tuples, and collections as interior nodes, with simple types at the leaves. When a variable goes out of scope, the entire tree is dropped recursively.
 
-The String's stack representation (pointer, length, capacity) is bitwise-copied to `s2`, and `s1` is invalidated. The heap data is **not** duplicated. This is a **move** — a zero-cost transfer of responsibility:
+The `String`'s stack representation (pointer, length, capacity) is bitwise-copied to `s2`, and `s1` is invalidated. The heap data is **not** duplicated. This is a **move** — a zero-cost transfer of responsibility:
 
 ```
 Stack:                     Heap:
@@ -363,7 +363,7 @@ The cycle detection algorithm:
 4. Trace from roots and mark everything reachable
 5. Everything unmarked is unreachable (part of a cycle) — finalize and free it
 
-The cycle collector only examines **container objects** (list, dict, set, class instances with `__dict__`, tuples). Non-containers (int, str, float) cannot form cycles and are handled purely by reference counting.
+The cycle collector only examines **container objects** (`list`, `dict`, `set`, class instances with `__dict__`, `tuple`). Non-containers (`int`, `str`, `float`) cannot form cycles and are handled purely by reference counting.
 
 ```python
 import gc
@@ -663,7 +663,7 @@ How each language manages resource lifetimes — files, locks, network connectio
 
 ### Rust: RAII via the Drop Trait
 
-RAII (Resource Acquisition Is Initialization) means owning a value means owning its resources. When a value goes out of scope, its `Drop::drop` method is called automatically — **deterministic** and **guaranteed**:
+RAII (Resource Acquisition Is Initialization) means that owning a value means owning its resources. When a value goes out of scope, its `Drop::drop` method is called automatically — **deterministic** and **guaranteed**:
 
 ```rust
 struct DatabaseConnection {
@@ -1043,7 +1043,7 @@ Each region can dynamically be Eden, Survivor, Old, or Humongous (for objects �
 
 G1 uses **SATB (Snapshot-At-The-Beginning) marking** — a pre-write barrier records the old value of any reference overwritten during concurrent marking, ensuring the collector sees a consistent snapshot. This prevents objects from being incorrectly reclaimed when the application modifies references concurrently with the marker.
 
-Since JDK 11, G1 supports **abortable mixed collections** — if the collector detects it will exceed the pause target, it can abort mid-collection, improving adherence to `-XX:MaxGCPauseMillis`.
+Since JDK 12, G1 supports **abortable mixed collections** — if the collector detects it will exceed the pause target, it can abort mid-collection, improving adherence to `-XX:MaxGCPauseMillis`.
 
 **Key tuning flags:**
 
@@ -1266,7 +1266,7 @@ Not all types support weak references — `int`, `str`, `tuple`, `list`, `dict` 
 **`weakref.finalize()`** (Python 3.4+) — the recommended cleanup mechanism:
 
 ```python
-import weakref, tempfile, os
+import weakref, shutil, tempfile, os
 
 class TempDir:
     def __init__(self):
