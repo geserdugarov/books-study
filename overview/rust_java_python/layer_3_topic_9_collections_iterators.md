@@ -292,7 +292,7 @@ a ^ b    # symmetric difference: {1, 4}
 
 ## 3. Iterator Protocols
 
-The iterator protocol defines how a language traverses collections. All three languages use the "external iterator" pattern — the caller drives iteration — but the mechanism differs: Rust uses traits and `Option`, Java uses interfaces and exceptions, Python uses dunder methods and `StopIteration`.
+The iterator protocol defines how a language traverses collections. All three languages use the "external iterator" pattern — the caller drives iteration — but the mechanisms differ: Rust uses traits and `Option`, Java uses interfaces and exceptions, Python uses dunder methods and `StopIteration`.
 
 ### Rust: `Iterator`, `IntoIterator`, and Three Iteration Modes
 
@@ -1350,7 +1350,7 @@ Primitive streams (`IntStream`, `LongStream`, `DoubleStream`) avoid boxing with 
 
 JIT optimization can **eliminate iterator object allocation** via escape analysis — if the iterator never escapes the loop, it is allocated on the stack or eliminated entirely.
 
-**`HashMap`** load factor is 0.75 — resize triggers when 75% full. `ArrayList` resize is 1.5x growth factor.
+**`HashMap`**'s load factor is 0.75 — resize triggers when 75% full. `ArrayList`'s growth factor is 1.5x.
 
 Parallel streams are effective only for **large datasets** (>10K elements) with CPU-bound operations. I/O-bound or small collections are slower with parallelism due to ForkJoinPool overhead.
 
