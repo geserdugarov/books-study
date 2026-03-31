@@ -225,7 +225,7 @@ Python's packaging story has been notoriously fragmented, evolving through multi
 
 **Historical evolution:**
 
-1. **distutils** (stdlib, deprecated Python 3.12) — the original packaging tool
+1. **distutils** (stdlib, deprecated in Python 3.10, removed in 3.12) — the original packaging tool
 2. **setuptools** + **easy_install** — third-party extension; added the "egg" format
 3. **pip** (2008) — installed from source trees rather than eggs; could install AND uninstall
 4. **virtualenv** / **venv** — isolated per-project environments
@@ -309,7 +309,7 @@ Poetry uses its own sections in `pyproject.toml` (`[tool.poetry]`) alongside the
 
 ## 2. Dependency Management & Resolution
 
-### Rust: SAT-Solver with SemVer
+### Rust: Backtracking Resolver with SemVer
 
 Cargo's dependency management is built on three pillars: `Cargo.toml` (what you want), `Cargo.lock` (what you got), and crates.io (where packages live).
 
@@ -513,7 +513,7 @@ Python's dependency resolution has evolved dramatically:
 
 | Aspect | Cargo (Rust) | Maven (Java) | Gradle (Java) | pip (Python) | uv (Python) | Poetry (Python) |
 |--------|-------------|--------------|---------------|-------------|------------|-----------------|
-| **Algorithm** | Backtracking + SAT | Nearest wins | Newest wins | Backtracking | SAT-based | SAT-based |
+| **Algorithm** | Backtracking | Nearest wins | Newest wins | Backtracking | SAT-based | SAT-based |
 | **Version syntax** | `^1.2`, `~1.2`, `=1.2` | `[1.2,2.0)`, exact | Same as Maven | `>=1.2,<2.0`, `~=1.2` | PEP 440 | `^1.2`, `~1.2` |
 | **Registry** | crates.io | Maven Central | Maven Central | PyPI | PyPI | PyPI |
 | **Transitive** | Automatic | Automatic | Automatic | Automatic | Automatic | Automatic |
@@ -890,7 +890,7 @@ cargo build --target aarch64-apple-darwin   # Cross-compile
 
 Output goes to `target/<target-triple>/debug/` (or `release/`).
 
-Rust supports **80+ target triples** covering Linux (x86_64, ARM, RISC-V), macOS (x86_64, aarch64), Windows (MSVC, GNU), WebAssembly, embedded (Cortex-M, RISC-V bare metal), and more.
+Rust supports **200+ target triples** covering Linux (x86_64, ARM, RISC-V), macOS (x86_64, aarch64), Windows (MSVC, GNU), WebAssembly, embedded (Cortex-M, RISC-V bare metal), and more.
 
 **Static linking for maximum portability:**
 
