@@ -292,7 +292,7 @@ Key concepts:
 
 - **`#[macro_export]`** makes a macro available at the crate root, usable from other crates.
 - **Recursive macros** enable complex patterns but can be hard to debug. The `cargo expand` tool (via the `cargo-expand` crate) shows the expanded output of macros — essential for debugging.
-- **Compare with C/C++ `#define`:** C macros are textual substitution (no hygiene, no type awareness, operates on raw text), while Rust macros operate on parsed token trees with hygiene.
+- **Compare with C/C++ `#define`:** C macros are textual substitution (no hygiene, no type awareness, operating on raw text), while Rust macros operate on parsed token trees with hygiene.
 
 > **Sources:** Blandy & Orendorff (2017) Ch.20 pp. 515–523 · Gjengset (2022) Ch.7 pp. 101–108
 
@@ -522,7 +522,7 @@ public class ReflectionDemo {
 Key concepts:
 
 - **Reflection is the foundation of Java frameworks:** Spring dependency injection, JPA/Hibernate ORM, JUnit test discovery, Jackson serialization — all rely on reflection to discover and invoke code dynamically.
-- **Performance cost:** reflection is 100x–1000x slower than direct calls for unoptimized reflection. The JIT compiler cannot inline reflected calls as easily.
+- **Performance cost:** unoptimized reflection is 100x–1000x slower than direct calls. The JIT compiler cannot inline reflected calls as easily.
 - **Bloch's rule (Item 65):** prefer interfaces to reflection. Use reflection for framework/library code (loading plugins, deserializing data) but not for application logic.
 - **Module system (Java 9+):** modules can restrict reflective access across module boundaries, limiting reflection's reach.
 
