@@ -1031,7 +1031,7 @@ fn get_config() -> &'static str {
 - `OnceCell<T>` — single-threaded (`!Sync`), replaces `lazy_static!` for local values
 - `OnceLock<T>` — multi-threaded (`Sync`), safe for `static` items; never poisons on panic (unlike `Mutex`)
 - Write exactly once, then read immutably forever
-- Stabilized in Rust 1.70 (`OnceCell`) and 1.80 (`OnceLock`)
+- Stabilized in Rust 1.70 (`OnceCell` and `OnceLock`)
 
 **`LazyCell<T,F>` / `LazyLock<T,F>`** — auto-initializing on first access via `Deref`:
 
@@ -1318,7 +1318,7 @@ Key difference from `Lock`: a thread that already holds a `Lock` will **deadlock
 | **Reader-writer lock** | `RwLock<T>` | `ReadWriteLock` | No stdlib equivalent |
 | **Lock-free atomic** | `AtomicI32`, `AtomicBool`, ... | `AtomicInteger`, `AtomicReference`, ... | No equivalent (GIL suffices for CPython) |
 | **Write-once init** | `OnceCell<T>` / `OnceLock<T>` | Holder idiom / `volatile` DCL | Module-level (runs on import) |
-| **Lazy init (Deref)** | `LazyCell<T>` / `LazyLock<T>` | `lazy_static` equivalent | Module-level / `functools.cached_property` |
+| **Lazy init (Deref)** | `LazyCell<T>` / `LazyLock<T>` | Holder idiom (static fields) | Module-level / `functools.cached_property` |
 | **Type-system enforcement** | Yes — `&T` cannot mutate without wrapper | No — any reference can mutate | No |
 | **Thread safety marker** | `Send` + `Sync` traits (compile-time) | Documentation / `@ThreadSafe` annotation | Convention only |
 
