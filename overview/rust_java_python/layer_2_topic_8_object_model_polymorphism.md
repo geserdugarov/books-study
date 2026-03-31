@@ -668,8 +668,8 @@ trait Iterator {
 **Supertraits** express trait dependencies:
 
 ```rust
-trait Display: fmt::Debug {
-    // Implementing Display requires also implementing Debug
+trait Printable: fmt::Debug {
+    // Implementing Printable requires also implementing Debug
 }
 ```
 
@@ -1356,7 +1356,7 @@ impl Add for &Vec2 {
 
 **`PartialEq` vs `Eq`, `PartialOrd` vs `Ord`:**
 
-- `PartialEq` — reflexive, symmetric, transitive (but `NaN != NaN`, so `f64: PartialEq` but not `Eq`).
+- `PartialEq` — symmetric and transitive, but not necessarily reflexive (`NaN != NaN`, so `f64: PartialEq` but not `Eq`).
 - `Eq` — `PartialEq` + reflexive for all values.
 - `PartialOrd` — may return `None` for incomparable values (`NaN`).
 - `Ord` — total ordering, always returns `Ordering`.
@@ -1921,7 +1921,7 @@ def area(shape: Shape) -> float:
 | Mapping | `{"action": "move", "x": x}` | Matches dictionaries |
 | OR | `"yes" \| "y" \| "Y"` | Matches alternatives |
 | Guard | `case x if x > 0` | Additional condition |
-| Walrus | `case (x := Point(0, y))` | Named sub-pattern |
+| AS pattern | `case Point(0, y) as p` | Named sub-pattern |
 
 **Class patterns and `__match_args__`:**
 
