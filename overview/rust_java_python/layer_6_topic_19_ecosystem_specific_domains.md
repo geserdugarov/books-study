@@ -355,7 +355,7 @@ The data processing ecosystem spans from single-machine interactive exploration 
 
 Python dominates data science because NumPy and pandas provide the right abstraction level for interactive data exploration. NumPy stores data in contiguous C arrays (`np.ndarray`), eliminating Python's per-object overhead and enabling SIMD-vectorized operations in compiled C/Fortran code. `np.sum(array)` is approximately 100x faster than `sum(python_list)` because it avoids interpreter dispatch, type checking, and pointer chasing entirely.
 
-Pandas builds on NumPy, providing labeled DataFrames with SQL-like operations (groupby, merge, pivot). However, pandas has significant limitations: it is single-threaded by default, loads entire datasets into memory (no lazy evaluation), uses Python objects for string columns (slow), and its internal copy-on-write semantics can cause unexpected memory consumption.
+pandas builds on NumPy, providing labeled DataFrames with SQL-like operations (groupby, merge, pivot). However, pandas has significant limitations: it is single-threaded by default, loads entire datasets into memory (no lazy evaluation), uses Python objects for string columns (slow), and its internal copy-on-write semantics can cause unexpected memory consumption.
 
 Dask addresses the single-machine limitation by providing a pandas-compatible API over distributed computation — `dask.dataframe` partitions a DataFrame across workers, enabling out-of-core and parallel processing.
 
@@ -1401,23 +1401,23 @@ The critical technical enabler is GIL management: Rust code called via PyO3 can 
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│                   Python Layer                            │
+│                   Python Layer                           │
 │  - User-facing API (ergonomic, familiar)                 │
 │  - Type hints, documentation, Jupyter support            │
 │  - PyPI distribution (pip install)                       │
 │  - import polars as pl / from pydantic import BaseModel  │
 ├──────────────────────────────────────────────────────────┤
-│                   PyO3 Bridge                             │
+│                   PyO3 Bridge                            │
 │  - Automatic type conversion (str↔String, list↔Vec)      │
 │  - GIL management (acquire/release)                      │
 │  - #[pyfunction], #[pyclass], #[pymethods]               │
 │  - maturin builds → .whl files                           │
 ├──────────────────────────────────────────────────────────┤
-│                   Rust Layer                               │
-│  - Computational core (algorithms, data structures)       │
-│  - Rayon for parallel execution (GIL released)            │
-│  - SIMD vectorization, zero-copy memory                   │
-│  - Memory safety guarantees (no buffer overflows)         │
+│                   Rust Layer                             │
+│  - Computational core (algorithms, data structures)      │
+│  - Rayon for parallel execution (GIL released)           │
+│  - SIMD vectorization, zero-copy memory                  │
+│  - Memory safety guarantees (no buffer overflows)        │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -1476,15 +1476,15 @@ Language boundaries should align with deployment boundaries (separate processes,
 ```
 Production multi-language architecture example:
 
-┌─────────────────┐     ┌───────────────────┐     ┌──────────────────┐
-│   Rust Proxy    │────▶│  Java Services    │────▶│  Python ML       │
-│   (Axum)        │     │  (Spring Boot)    │     │  (FastAPI +      │
-│                 │     │                   │     │   PyTorch)       │
-│ • 300K+ req/s   │     │ • Business logic  │     │ • Model serving  │
+┌──────────────────┐    ┌───────────────────┐     ┌──────────────────┐
+│   Rust Proxy     │───▶│  Java Services    │────▶│  Python ML       │
+│   (Axum)         │    │  (Spring Boot)    │     │  (FastAPI +      │
+│                  │    │                   │     │   PyTorch)       │
+│ • 300K+ req/s    │    │ • Business logic  │     │ • Model serving  │
 │ • TLS termination│    │ • Auth, billing   │     │ • Feature eng.   │
 │ • Rate limiting  │    │ • Database ops    │     │ • A/B testing    │
-│ • ~2MB memory   │     │ • Kafka consumers │     │ • Jupyter exp.   │
-└─────────────────┘     └───────────────────┘     └──────────────────┘
+│ • ~2MB memory    │    │ • Kafka consumers │     │ • Jupyter exp.   │
+└──────────────────┘    └───────────────────┘     └──────────────────┘
         │                       │                         │
         └───────── HTTP/gRPC ───┴──── HTTP/gRPC ──────────┘
 ```
