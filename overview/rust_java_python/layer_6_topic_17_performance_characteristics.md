@@ -38,7 +38,7 @@ fn sum_doubled_positives_loop(v: &[i32]) -> i32 {
 
 The LLVM backend compiles the iterator chain into a single loop with no function call overhead, no allocation, and no dynamic dispatch — identical to the hand-written version.
 
-Monomorphization generates specialized code for each concrete type:
+For example, calling `largest` with `i32` and `f64` slices produces two fully specialized functions:
 
 ```rust
 // This generic function...
@@ -657,7 +657,7 @@ The three languages have dramatically different startup characteristics: Rust st
 
 ### Rust: Instant Startup
 
-Rust native binaries start in microseconds. The OS loads the binary into memory, the dynamic linker resolves shared library symbols (if any — Rust defaults to static linking), and `main()` executes. There is no runtime initialization, no interpreter startup, no JIT warmup.
+Rust native binaries start in low single-digit milliseconds. The OS loads the binary into memory, the dynamic linker resolves shared library symbols (if any — Rust defaults to static linking), and `main()` executes. There is no runtime initialization, no interpreter startup, no JIT warmup.
 
 ```bash
 # A "hello world" Rust binary starts in ~1-3 milliseconds
