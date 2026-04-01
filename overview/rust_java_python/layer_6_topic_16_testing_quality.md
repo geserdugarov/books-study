@@ -846,7 +846,7 @@ The meta-insight: the spectrum of mocking power is inversely correlated with com
 
 ## 5. Fuzzing
 
-Fuzz testing feeds random, malformed, or unexpected inputs to find crashes, panics, and security vulnerabilities. Each language's safety guarantees determine what fuzzing can find — in safe Rust, fuzzing cannot find memory corruption but finds logic errors; in Java, it finds exception paths and injection vulnerabilities; in Python, fuzzing C extensions can find real memory corruption.
+Fuzz testing feeds random, malformed, or unexpected inputs to a program to find crashes, panics, and security vulnerabilities. Each language's safety guarantees determine what fuzzing can find — in safe Rust, fuzzing cannot find memory corruption but finds logic errors; in Java, it finds exception paths and injection vulnerabilities; in Python, fuzzing C extensions can find real memory corruption.
 
 ### Rust: `cargo-fuzz` and Structured Fuzzing
 
@@ -982,7 +982,7 @@ The meta-insight: each language's safety guarantees determine what fuzzing can f
 
 ## 6. Static Analysis
 
-The number and power of static analysis tools in a language's ecosystem is inversely proportional to the power of its type system. Rust needs the least external static analysis (the compiler catches the most), Python needs the most (the interpreter catches the least), Java is in between.
+The number and power of static analysis tools in a language's ecosystem are inversely proportional to the power of its type system. Rust needs the least external static analysis (the compiler catches the most), Python needs the most (the interpreter catches the least), Java is in between.
 
 ### Rust: Clippy and Miri
 
@@ -1312,7 +1312,7 @@ Coverage anti-patterns:
 | Rust | Gjengset (2022) — *Rust for Rustaceans* | Ch.6 pp. 85–100 |
 | Rust | Matthews (2024) — *Code Like a Pro in Rust* | Ch.3 pp. 43–62, Ch.6 pp. 121–140, Ch.7 pp. 141–154 |
 | Rust | Blandy & Orendorff (2017) — *Programming Rust* | Ch.8 pp. 161–191 |
-| Java | Valeev (2024) — *100 Java Mistakes* | Ch.1 pp. 1–18, Ch.10 pp. 274–310 |
+| Java | Valeev (2024) — *100 Java Mistakes* | Ch.1 pp. 1–18 |
 | Java | Evans et al (2022) — *The Well-Grounded Java Developer* | Ch.13 pp. 437–465, Ch.14 pp. 466–493 |
 | Java | Goetz et al (2006) — *Java Concurrency in Practice* | Ch.12 pp. 247–272 |
 | Java | Oaks (2020) — *Java Performance* | Ch.2 pp. 15–48, Ch.3 pp. 49–88 |
