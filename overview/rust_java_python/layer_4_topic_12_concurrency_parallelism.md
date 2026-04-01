@@ -151,7 +151,7 @@ Key concepts:
 - **The GIL** allows only one thread to execute Python bytecode at a time. Threads provide concurrency (interleaving) but not CPU parallelism.
 - **I/O-bound work benefits from threads** — the GIL is released during I/O syscalls, allowing other threads to run.
 - **CPU-bound work gets zero speedup from threads** — threads actually slow down due to GIL contention. Use `multiprocessing` for CPU parallelism.
-- **Thread exceptions do not propagate** to the parent — they kill the thread silently unless caught. Unlike Rust's `join()` which returns `Result`.
+- **Thread exceptions do not propagate** to the parent — they kill the thread silently unless caught, unlike Rust's `join()`, which returns `Result`.
 - **Daemon threads** (`daemon=True`) are killed when the main thread exits, useful for background tasks.
 
 > **Sources:** Ramalho (2022) Ch.19 pp. 695–714 · Hattingh (2020) Ch.2 pp. 9–20 · Beazley (2021) Ch.9.14 pp. 247–260 · [Python docs — `threading` module](https://docs.python.org/3/library/threading.html) · [Python docs — Concurrency](https://docs.python.org/3/library/concurrency.html) · [Real Python — An Intro to Threading in Python](https://realpython.com/intro-to-python-threading/)
