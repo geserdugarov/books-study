@@ -402,7 +402,7 @@ Java's virtual thread scheduler uses `ForkJoinPool` as the carrier thread pool. 
 
 ```java
 import java.util.concurrent.*;
-import jdk.incubator.concurrent.StructuredTaskScope;
+import java.util.concurrent.StructuredTaskScope;
 
 public class RuntimeExamples {
 
@@ -829,7 +829,7 @@ Java has multiple cancellation mechanisms, from legacy `Thread.interrupt()` to m
 
 ```java
 import java.util.concurrent.*;
-import jdk.incubator.concurrent.StructuredTaskScope;
+import java.util.concurrent.StructuredTaskScope;
 
 public class CancellationExamples {
 
