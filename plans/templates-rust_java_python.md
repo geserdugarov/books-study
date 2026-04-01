@@ -21,17 +21,15 @@ in `./plans/rust_java_python/` folder.
 # Update index
 
 ```text
-I've added "## Suggested Additional Books" from the plan:
-  ./plans/rust_java_python/layer_1_topic_1_philosophy_design_goals.md
-Add index for newly added books from `./books/` folder, 
+I've added some new books in `./books/` folder.
+Add index for newly added books,
 check index examples for already indexed books in `./index/` folder.
 ```
 
 # Update plan with added literature
 
 ```text
-I've added "## Suggested Additional Books" from the plan:
-  ./plans/rust_java_python/layer_1_topic_1_philosophy_design_goals.md
+I've added some suggested books, their index is added by commit *
 Rewrite the plan correspondingly. 
 Use local books with higher priority.
 ```
@@ -40,7 +38,7 @@ Use local books with higher priority.
 
 ```text
 Use the plan:
-  ./plans/rust_java_python/layer_1_topic_1_philosophy_design_goals.md 
+  ./plans/rust_java_python/*.md 
 and collect all the data in one formatted md-file in ./overview/rust_java_python/, 
 which will have content from all mentioned resources combined, 
 ready for read, and with link to initial sources.
@@ -49,7 +47,11 @@ ready for read, and with link to initial sources.
 # Proofreading
 
 ```text
-Made a proofreading of ./overview/rust_java_python/layer_1_topic_1_philosophy_design_goals.md
-the content should be correct, there is no hallucinations, and content cover all major nuances of the topic.
+Made a proofreading of:
+  ./overview/rust_java_python/*.md
+the content should be:
+  - correct,
+  - without any hallucinations,
+  - cover all major nuances of the topic.
 ```
 
