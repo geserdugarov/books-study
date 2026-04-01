@@ -6,7 +6,7 @@
 
 ## 1. FFI Foundations: ABI, Calling Conventions, Symbol Resolution
 
-The C ABI (Application Binary Interface) is the lingua franca of cross-language interop. Every major operating system defines its calling convention — how function arguments are passed (registers vs. stack), how return values are delivered, who saves/restores registers, and how the stack is aligned. On Linux/macOS x86-64 this is System V AMD64; on Windows it is the Microsoft x64 convention. When any language wants to call code written in another language, it almost always goes through this C ABI — making C the universal bridge even in 2026.
+The C ABI (Application Binary Interface) is the lingua franca of cross-language interop. Every major operating system defines its calling convention — how function arguments are passed (registers vs. stack), how return values are delivered, who saves/restores registers, and how the stack is aligned. On Linux/macOS x86-64, this is System V AMD64; on Windows it is the Microsoft x64 convention. When any language wants to call code written in another language, it almost always goes through this C ABI — making C the universal bridge even in 2026.
 
 ### Rust: `extern "C"` and the FFI Surface
 
@@ -358,7 +358,7 @@ Supported type mappings:
 - `Box<T>` / `UniquePtr<T>` — owned heap objects
 - `&T` / `const T&` — shared references
 
-`cxx` does not support arbitrary C++ (no templates, no inheritance, no exceptions) — it provides a safe subset. `autocxx` (from Google) attempts broader automated C++ binding generation but with less safety guarantee.
+`cxx` does not support arbitrary C++ (no templates, no inheritance, no exceptions) — it provides a safe subset. `autocxx` (from Google) attempts broader automated C++ binding generation but with fewer safety guarantees.
 
 > **Sources:** [`cxx` crate — Safe interop between Rust and C++](https://cxx.rs/) · [`cxx` GitHub repository](https://github.com/dtolnay/cxx) · [`autocxx` — automated C++ bindings](https://github.com/google/autocxx)
 
