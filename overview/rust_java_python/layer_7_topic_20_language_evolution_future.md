@@ -217,7 +217,7 @@ RFC proposal → RFC accepted → Implementation behind feature gate on nightly
     → Testing & refinement → Stabilization Report → Stabilized into stable
 ```
 
-Some features spend years in nightly — async traits took from 2019 RFC to 2023 stabilization. Feature flags in `Cargo.toml` (conditional compilation) are a different mechanism from compiler feature gates (language feature access):
+Some features spend years in nightly — async traits took from 2018 RFC to 2023 stabilization. Feature flags in `Cargo.toml` (conditional compilation) are a different mechanism from compiler feature gates (language feature access):
 
 ```rust
 // Compiler feature gate (nightly only): enables unstable language features
@@ -493,7 +493,7 @@ def process(x: Optional[Union[str, int]], items: List[str]) -> None: ...
 def process(x: str | int | None, items: list[str]) -> None: ...
 ```
 
-Compare with Rust: `#[deprecated(since = "1.0.0", note = "use bar instead")]` emits compiler warnings, and cargo's dependency resolver contains migration scope. Compare with Java: `@Deprecated(since = "9", forRemoval = true)` is more formal, and jdeprscan automates detection.
+Compare with Rust: `#[deprecated(since = "1.0.0", note = "use bar instead")]` emits compiler warnings, and cargo's dependency resolver constrains migration scope. Compare with Java: `@Deprecated(since = "9", forRemoval = true)` is more formal, and jdeprscan automates detection.
 
 ---
 
