@@ -116,6 +116,7 @@ Maven's philosophy is strict convention: source code in `src/main/java/`, tests 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
          http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
@@ -254,7 +255,7 @@ The virtualenv works by adjusting `sys.prefix` so pip installs into the virtuale
 uv is an extremely fast Python package and project manager written in Rust (by Astral, the creators of Ruff). It consolidates functionality from pip, pip-tools, pipx, poetry, pyenv, and virtualenv:
 
 ```bash
-uv init hello-python            # Create a new project with pyproject.toml
+uv init --package hello-python  # Create a new package project with pyproject.toml
 uv add requests                 # Add a dependency
 uv sync                         # Install all dependencies from lockfile
 uv run python main.py           # Run in the project environment
@@ -262,7 +263,7 @@ uv python install 3.12          # Install a Python version
 uv python pin 3.12              # Pin Python version per-directory
 ```
 
-`uv init` creates a `pyproject.toml`:
+`uv init --package` creates a `pyproject.toml`:
 
 ```toml
 [project]
@@ -272,9 +273,11 @@ requires-python = ">=3.12"
 dependencies = []
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["uv_build>=0.5,<0.6"]
+build-backend = "uv_build"
 ```
+
+Plain `uv init hello-python` (without `--package`) creates an application project that has no `[build-system]` table — it is not meant to be packaged or published.
 
 This format is standardized by **PEP 518** (build-system specification) and **PEP 621** (project metadata specification). The `[build-system]` table declares what tool builds the package; the `[project]` table contains metadata.
 
@@ -660,11 +663,11 @@ poetry install          # Install exactly what poetry.lock specifies
 **pip-tools (pip-compile):**
 
 ```bash
-pip-compile requirements.in    # Generate pinned requirements.txt from loose specs
-pip-sync requirements.txt      # Install exactly what's listed
+pip-compile --generate-hashes requirements.in   # Pinned requirements.txt with hashes
+pip-sync requirements.txt                       # Install exactly what's listed
 ```
 
-`pip-compile` takes a `requirements.in` file with loose version specifications and produces a fully-pinned `requirements.txt` with hashes. This bridges the gap between pip's simplicity and lockfile precision.
+`pip-compile` takes a `requirements.in` file with loose version specifications and produces a fully-pinned `requirements.txt`. By default it pins versions only; `--generate-hashes` adds per-package SHA256 hashes for integrity verification. This bridges the gap between pip's simplicity and lockfile precision.
 
 **PEP 665** attempted to standardize a lockfile format for Python but was **rejected** — the ecosystem hasn't yet agreed on a universal format. In practice, `uv.lock` and `poetry.lock` are the most widely used.
 
@@ -1406,7 +1409,7 @@ publishing {
 }
 ```
 
-**Gradle Build Cache** can be shared across CI runs for faster builds. The `--build-cache` flag (enabled by default) reuses outputs from previous builds.
+**Gradle Build Cache** can be shared across CI runs for faster builds. It is opt-in: enable it per-invocation with the `--build-cache` flag, or persistently by setting `org.gradle.caching=true` in `gradle.properties`. Once enabled, it reuses task outputs from previous builds.
 
 **Jib — Container Images Without Docker:**
 
