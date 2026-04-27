@@ -348,13 +348,15 @@ b.append(a)  # b → a
 del a, b     # Both have refcount 1 (from each other) — LEAKED without cycle collector
 ```
 
-CPython's **cycle collector** handles this. It uses a generational algorithm across three generations:
+CPython's **cycle collector** handles this. Through Python 3.13 it uses a **three-generation** algorithm; **Python 3.14.0 redesigned it as an incremental two-generation collector** (gh-108362) that interleaves marking with the interpreter to cap stop-the-world pauses, removing generation 1 and making `threshold2` meaningless. The current 3.14 series (latest release **3.14.4**) still ships this incremental two-generation collector; **a revert to the 3.13 three-generation generational GC is planned for 3.14.5**, which would make generation 1 and `threshold2` live again:
 
 | Generation | Trigger threshold | Collected frequency |
 |------------|------------------|---------------------|
-| Gen 0 | ~700 allocations - deallocations | Most frequent |
-| Gen 1 | After 10 gen-0 collections | Medium |
-| Gen 2 | After 10 gen-1 collections | Least frequent |
+| Gen 0 (young) | ~700 allocations - deallocations (threshold0) | Most frequent |
+| Gen 1 | After threshold1 (=10) gen-0 collections | Medium |
+| Gen 2 (old) | After threshold2 (=10) gen-1 collections | Least frequent |
+
+`gc.get_threshold()` returns `(threshold0, threshold1, threshold2)`. Defaults are `(700, 10, 10)` on Python 3.13 (and would return on 3.14.5+ if the planned revert lands); on 3.14.0–3.14.4 the collector is two-generation, so `threshold0` (young) and `threshold1` (old-generation increment scan rate) drive scheduling and the third slot is reported as `0` and otherwise ignored.
 
 The cycle detection algorithm:
 1. For each container object in the generation, copy its refcount to `gc_refs`
@@ -753,9 +755,8 @@ try (var conn = DriverManager.getConnection(url);
 **`__del__` — Unreliable Finalizer**
 
 Called when refcount drops to zero (usually deterministic in CPython for non-cyclic data), but with many caveats:
-- Not called for objects in reference cycles (improved by PEP 442 in Python 3.4)
+- Pre-Python 3.4, objects with `__del__` participating in a reference cycle were never finalized — the entire cycle ended up in `gc.garbage`. **PEP 442 (Python 3.4)** changed this: `__del__` is now invoked exactly once per object, even for cycle members, but the call **order is unspecified** and a finalizer that resurrects the object may itself be skipped on a future collection
 - Exceptions in `__del__` are silently ignored (printed to stderr)
-- Order of `__del__` calls not guaranteed for cyclic objects
 - Can resurrect objects by creating new references to `self`
 
 ```python
@@ -927,7 +928,9 @@ Every Java object on the heap has a **header** before its field data:
 | `new boolean[0]` | 16 bytes (incl. length) | 0 | 0 | **16 bytes** |
 | `new int[10]` | 16 bytes | 40 | 0 | **56 bytes** |
 
-**Compressed oops** (`-XX:+UseCompressedOops`, default for heaps < 32 GB) reduce object references from 8 to 4 bytes. The trick: since objects are 8-byte aligned, the lowest 3 bits are always zero, so they store `address >> 3` in 4 bytes and reconstruct the full address as `value << 3`. This effectively addresses up to 32 GB of heap with 4-byte references.
+**Compressed oops** (`-XX:+UseCompressedOops`, default for heaps < 32 GB) reduce object references from 8 to 4 bytes. The trick: since objects are 8-byte aligned, the lowest 3 bits are always zero, so they store `address >> 3` in 4 bytes and reconstruct the full address as `value << 3`. This effectively addresses up to 32 GB of heap with 4-byte references. **Compressed class pointers** (`-XX:+UseCompressedClassPointers`, also default with compressed oops) shrink the klass pointer from 8 to 4 bytes by indexing a class-metadata range rather than holding a full pointer.
+
+**Compact object headers** collapse the mark word and klass pointer into a single 8-byte word, dropping the per-object header from 12 bytes (with compressed class pointers) to **8 bytes**. With default 8-byte object alignment this halves `new Object()` from 16 to **8 bytes**, and shrinks layouts whose payload was forced into a second 8-byte slot purely by the 12-byte header — e.g. a single-`long` class drops from 24 (12 header + 4 padding + 8 long) to **16 bytes** (8 + 8), and a two-`int` class drops from 24 (12 + 8 + 4 padding) to **16 bytes** (8 + 8). Sizes that already filled their alignment slot do not change: a single-`int` class stays at 16 bytes (8 + 4 + 4 padding), and a three-`int` class stays at 24 bytes (8 + 12 + 4 padding). Delivered as experimental in **JDK 24 (JEP 450)** behind `-XX:+UnlockExperimentalVMOptions -XX:+UseCompactObjectHeaders`, and promoted to a product feature in **JDK 25 (JEP 519)** — on JDK 25 only `-XX:+UseCompactObjectHeaders` is required. Measurements report 10–20 % live-heap savings on object-heavy workloads.
 
 Use the **JOL** (Java Object Layout) tool to inspect actual layouts:
 
@@ -936,7 +939,7 @@ Use the **JOL** (Java Object Layout) tool to inspect actual layouts:
 System.out.println(ClassLayout.parseInstance(new Object()).toPrintable());
 ```
 
-> **Sources:** Oaks (2020) Ch.7 pp. 203–225 · Beckwith (2024) Ch.6 pp. 177–185 · [Aleksey Shipilev — Java Objects Inside Out](https://shipilev.net/jvm/objects-inside-out/) · [OpenJDK JOL tool](https://openjdk.org/projects/code-tools/jol/)
+> **Sources:** Oaks (2020) Ch.7 pp. 203–225 · Beckwith (2024) Ch.6 pp. 177–185 · [Aleksey Shipilev — Java Objects Inside Out](https://shipilev.net/jvm/objects-inside-out/) · [OpenJDK JOL tool](https://openjdk.org/projects/code-tools/jol/) · [JEP 450 — Compact Object Headers (Experimental, JDK 24)](https://openjdk.org/jeps/450) · [JEP 519 — Compact Object Headers (Product, JDK 25)](https://openjdk.org/jeps/519)
 
 ### Python: PyObject Struct and Object Internals
 
@@ -1001,7 +1004,7 @@ Storing 1,000,000 points (x, y as 64-bit floats):
 | Language | Representation | Per-point | Total | Contiguous? |
 |----------|---------------|-----------|-------|-------------|
 | **Rust** | `Vec<Point>` where `struct Point { x: f64, y: f64 }` | 16 bytes | **16 MB** | Yes — cache-friendly |
-| **Java** | `Point[]` where `class Point { double x, y; }` | 32 bytes (16 header + 16 data) + 4-8 bytes ref | **~36 MB** | No — array of pointers to scattered objects |
+| **Java** | `Point[]` where `class Point { double x, y; }` | 32 bytes (12 header + 4 alignment + 16 data) + 4 bytes ref (compressed oops) | **~36 MB** | No — array of pointers to scattered objects |
 | **Python** | `list` of `Point(x, y)` instances | ~170 bytes (object + dict + 2 floats) | **~170 MB** | No — scattered heap objects |
 | **Python** `__slots__` | `list` of `Point(x, y)` with `__slots__` | ~64 bytes (object + 2 float objects) | **~64 MB** | No — still scattered |
 | **Python** NumPy | `np.array(shape=(1_000_000, 2), dtype=np.float64)` | 16 bytes | **16 MB** | Yes — C-contiguous |
@@ -1077,11 +1080,11 @@ ZGC aims for **< 1ms pauses** regardless of heap size (tested up to 16 TB heaps)
 
 This allows ZGC to relocate objects **concurrently** with application threads — no stop-the-world for compaction. The only pauses are for thread scanning (root marking), which is proportional to the number of threads, not heap size.
 
-**ZGC became generational in Java 21** — separate young and old generations within the ZGC framework, reducing total GC work.
+**ZGC became generational in Java 21** (JEP 439) as an opt-in mode (`-XX:+ZGenerational`), reducing total GC work by collecting the young generation more frequently. **JEP 474 (JDK 23)** flipped the default so generational ZGC is now used whenever `-XX:+UseZGC` is set, and **JEP 490 (JDK 24)** removed the non-generational mode entirely — the `ZGenerational` flag was marked obsolete on JDK 24-25 (accepted with a warning) and **expired in JDK 26 (JDK-8369983)**, where the JVM rejects it outright.
 
 ```bash
--XX:+UseZGC                        # Enable ZGC
--XX:+ZGenerational                 # Enable generational ZGC (Java 21+)
+-XX:+UseZGC                        # Enable ZGC; generational since JDK 23 by default
+# -XX:+ZGenerational               # Obsolete (warning) on JDK 24-25; rejected on JDK 26+
 ```
 
 ### Shenandoah: Concurrent Compaction via Brooks Pointers
@@ -1092,10 +1095,10 @@ Shenandoah uses a similar goal (sub-millisecond pauses) but a different mechanis
 - During concurrent relocation, the forwarding pointer is updated to point to the new copy
 - Read and write barriers check the forwarding pointer on every object access
 
-Shenandoah is available in **OpenJDK** but not in Oracle JDK.
+Shenandoah ships in most OpenJDK distributions (Eclipse Temurin, Red Hat build of OpenJDK, Amazon Corretto, Azul Zulu) but **not in Oracle's commercial JDK builds** — Oracle excludes it because the project is maintained by Red Hat. A **generational Shenandoah** mode (JEP 404) was originally targeted to JDK 21, deferred, then delivered as experimental in **JDK 24** and promoted to a product feature in **JDK 25 (JEP 521)**. Single-generation mode remains the default; opt in with `-XX:ShenandoahGCMode=generational`.
 
 ```bash
--XX:+UseShenandoahGC               # Enable Shenandoah (OpenJDK only)
+-XX:+UseShenandoahGC               # Enable Shenandoah (most OpenJDK builds; not Oracle JDK)
 ```
 
 ### Safepoints and Card Tables
@@ -1160,9 +1163,9 @@ PhantomReference<Resource> phantom = new PhantomReference<>(resource, queue);
 | **Concurrent compaction** | No (stop-the-world evacuation) | Yes (colored pointers + load barriers) | Yes (Brooks pointers + read/write barriers) |
 | **Barrier type** | Write barrier (card table) | Load barrier | Read + write barriers |
 | **Per-object overhead** | None | None (metadata in pointer bits) | 8 bytes (forwarding pointer) |
-| **Generational** | Yes | Yes (Java 21+) | No |
+| **Generational** | Yes | Yes (default since JDK 23; non-generational removed in JDK 24) | Optional (experimental in JDK 24 via JEP 404, product in JDK 25 via JEP 521; single-gen remains default) |
 | **Throughput overhead** | ~5% | ~5–15% | ~5–15% |
-| **Availability** | All JDK distributions | Oracle JDK, OpenJDK | OpenJDK only |
+| **Availability** | All JDK distributions | All JDK distributions | OpenJDK builds (excluded from Oracle JDK) |
 
 ---
 
@@ -1172,17 +1175,31 @@ CPython's complete memory management picture — allocator layers, reference cou
 
 ### The gc Module and Cycle Collector Internals
 
-CPython's cycle collector uses a **generational tri-color marking algorithm**:
+CPython's cycle collector uses a **generational tri-color marking algorithm**. Through Python 3.13 it scheduled three generations as described above; **Python 3.14.0 made the collector incremental** — old-generation work was split across many invocations to avoid long stop-the-world pauses, generation 1 was removed, and `threshold2` was no longer meaningful. The current 3.14 series (latest release **3.14.4**) still ships the incremental collector; **a revert to the 3.13 three-generation generational GC is planned for 3.14.5**, which would make generation 1 and `threshold2` live again.
 
 ```python
 import gc
 
-# Inspect current thresholds: (gen0_threshold, gen1_threshold, gen2_threshold)
-gc.get_threshold()   # (700, 10, 10) by default
+# get_threshold() returns (threshold0, threshold1, threshold2).
+# 3.13 (and 3.14.5+ if the planned revert lands):
+#                   all three values drive scheduling (gen0, gen1, gen2);
+#                   default (700, 10, 10).
+# 3.14.0–3.14.4:    two-generation incremental collector — only threshold0
+#                   (young) and threshold1 (old-gen increment scan rate) are
+#                   honored; the third slot is reported as 0 and otherwise
+#                   ignored, and gen1 is absent.
+gc.get_threshold()   # (700, 10, 10) on 3.13; planned for 3.14.5+
 
-# gen0 collects when: allocations - deallocations > 700
-# gen1 collects when: gen0 has collected 10 times since last gen1 collection
-# gen2 collects when: gen1 has collected 10 times since last gen2 collection
+# Scheduling rules:
+# 3.13 (and 3.14.5+ if the planned revert lands):
+#   gen0 collects when: allocations - deallocations > threshold0
+#   gen1 collects when: gen0 has collected threshold1 times since last gen1 collection
+#   gen2 collects when: gen1 has collected threshold2 times since last gen2 collection
+# 3.14.0-3.14.4 (incremental, two-generation):
+#   young (gen0) collects when: allocations - deallocations > threshold0
+#   old generation is scanned incrementally; threshold1 controls how much
+#   old-gen work is done per young collection. There is no gen1, and
+#   threshold2 is ignored.
 
 # Freeze/unfreeze (useful for fork-based servers to avoid copy-on-write):
 gc.freeze()    # move all current objects to a permanent generation (not collected)
@@ -1454,7 +1471,7 @@ vec.push(2);
 
 ### Java: Foreign Memory API Arenas
 
-Java 21's Foreign Function & Memory API provides explicit arena-like allocation for **off-heap memory**:
+The **Foreign Function & Memory API** finalized in **Java 22 (JEP 454)** — preview since JDK 19 and a third preview in JDK 21 — provides explicit arena-like allocation for **off-heap memory**:
 
 ```java
 // Arena.ofConfined() — single-thread access, deterministic cleanup
