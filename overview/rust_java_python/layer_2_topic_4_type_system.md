@@ -47,21 +47,22 @@ Java has a dual type system — eight primitives live on the stack with no objec
 | `float` | 4 bytes | `Float` | 0.0f |
 | `double` | 8 bytes | `Double` | 0.0d |
 | `char` | 2 bytes (UTF-16) | `Character` | '\u0000' |
-| `boolean` | JVM-dependent | `Boolean` | false |
+| `boolean` | impl-defined for fields (typically 1 byte); 32 bits on the operand stack; `boolean[]` storage is impl-defined — HotSpot/Oracle JVMs use 1 byte per element via `baload`/`bastore`, but JVMS permits packed encodings (JVMS §2.3.4, §2.11.1, §6.5) | `Boolean` | false |
 
-**Autoboxing/unboxing** bridges primitives and objects but introduces subtle bugs. The `==` operator on `Integer` compares references (not values) for values outside the cached range -128 to 127, and unboxing a `null` boxed type throws `NullPointerException`:
+**Autoboxing/unboxing** bridges primitives and objects but introduces subtle bugs. The `==` operator on `Integer` compares references (not values) for values outside the cached range -128 to 127 (the upper bound is configurable via `-XX:AutoBoxCacheMax`), and unboxing a `null` boxed type throws `NullPointerException`:
 
 ```java
+// Assumes default cache (-128 to 127); 200 falls outside, so each literal boxes to a fresh object:
 Integer a = 200;
 Integer b = 200;
-System.out.println(a == b);      // false — different objects
+System.out.println(a == b);      // false — different objects (could be true if -XX:AutoBoxCacheMax raises the upper bound past 200)
 System.out.println(a.equals(b)); // true  — value comparison
 
 Integer c = null;
 int d = c;  // NullPointerException — unboxing null
 ```
 
-Widening conversions (`int` to `long`) are implicit but can lose precision (`int` to `float` loses bits for large integers). Narrowing conversions require explicit casts — `(byte)256` wraps silently to 0. Compound assignment operators perform hidden narrowing: `short s = 0; s += 1;` compiles (implicit cast), but `s = s + 1;` does not (result is `int`).
+Widening conversions are implicit. Most are lossless (`int` to `long`, `byte` to `int`), but a few may silently lose precision because the destination has fewer mantissa bits than the source has significand digits: `int`/`long` to `float` and `long` to `double` can round (e.g. `(float) 16_777_217` evaluates to `1.6777216E7`). Narrowing conversions require explicit casts — `(byte)256` wraps silently to 0. Compound assignment operators perform hidden narrowing: `short s = 0; s += 1;` compiles (implicit cast), but `s = s + 1;` does not (result is `int`).
 
 > **Sources:** Horstmann (2024) Ch.3 pp. 41–52 · Bloch (2018) Item 61 · Valeev (2024) Ch.4 pp. 96–110 · [JLS — Primitive Types and Values](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.2) · [JLS — Conversions and Contexts](https://docs.oracle.com/javase/specs/jls/se21/html/jls-5.html) · [Oracle — Autoboxing and Unboxing](https://docs.oracle.com/javase/tutorial/java/data/autoboxing.html)
 
@@ -507,7 +508,7 @@ let shapes: Vec<Box<dyn Area>> = vec![
 - **Derive macros**: `#[derive(Debug, Clone, PartialEq)]` auto-implements common traits
 - **Orphan rule**: you can only implement a trait if either the trait or the type is local to your crate — prevents conflicting implementations across crates
 
-**Trait objects** (`dyn Trait`) use a **fat pointer** — two pointer widths: one to the data, one to the vtable. Not all traits are object-safe; traits with generic methods or methods returning `Self` cannot be used as trait objects.
+**Trait objects** (`dyn Trait`) use a **fat pointer** — two pointer widths: one to the data, one to the vtable. Not every trait can be used behind `dyn`: such traits are called **dyn-compatible** (formerly "object-safe"). Methods with generics or that return `Self` cannot be dispatched through a trait object, so a trait is dyn-compatible only if every such method is excluded from the vtable via a `where Self: Sized` bound (those methods then remain callable on concrete types but not through `dyn Trait`).
 
 > **Sources:** Blandy & Orendorff (2017) Ch.11 pp. 235–263, Ch.12 pp. 265–280 · Klabnik & Nichols (2023) Ch.10 pp. 200–213 · Gjengset (2022) Ch.2 pp. 19–35, Ch.3 pp. 37–56 · [Rust Reference — Traits](https://doc.rust-lang.org/reference/items/traits.html) · [Rust Reference — Trait Objects](https://doc.rust-lang.org/reference/types/trait-object.html)
 
@@ -740,7 +741,7 @@ def process(data: list[int]) -> int:
 
 The gradual typing philosophy means you can add types incrementally to an existing codebase. The `typing` module provides annotation building blocks: `Optional`, `Union`, `Literal`, `Final`, `TypeGuard`, `TypeAlias`, `Annotated`, and more. `reveal_type(x)` shows the inferred type in mypy/pyright output.
 
-**PEP 563** (Postponed Evaluation of Annotations) makes all annotations strings by default, avoiding runtime evaluation overhead and enabling forward references.
+**Annotation evaluation semantics** have changed direction over time. **PEP 563** (Postponed Evaluation of Annotations) stores annotations as strings, avoiding runtime evaluation overhead and enabling forward references — but it is opt-in via `from __future__ import annotations`. Its planned promotion to default behavior was abandoned: PEP 563 is now formally marked **Superseded by PEP 649** (with implementation details in PEP 749). **PEP 649** (Deferred Evaluation of Annotations Using Descriptors) ships in Python 3.14: each class, module, and function gets an `__annotate__` function that computes the annotations on demand, and `__annotations__` is exposed as a lazy data descriptor that calls `__annotate__` and caches the result — preserving real objects while keeping forward-reference and import-cycle benefits.
 
 > **Sources:** Martelli et al (2023) Ch.5 pp. 171–194 · Ramalho (2022) Ch.8 pp. 253–302 · Viafore (2021) Ch.2–7 pp. 23–106 · [PEP 484 — Type Hints](https://peps.python.org/pep-0484/) · [PEP 526 — Variable Annotations](https://peps.python.org/pep-0526/) · [mypy documentation](https://mypy.readthedocs.io/en/stable/) · [pyright documentation](https://microsoft.github.io/pyright/)
 
@@ -751,7 +752,7 @@ The gradual typing philosophy means you can add types incrementally to an existi
 | **Inference scope** | Local variables, generics, closures | `var` (locals), diamond, lambdas | mypy infers within annotated functions |
 | **Required annotations** | Function signatures (params + return) | Fields, parameters, return types | Nothing required — all optional |
 | **Enforcement** | Built into compiler | Built into compiler | External tools (mypy, pyright, Pyre) |
-| **Inference algorithm** | Bidirectional (Hindley-Milner-influenced) | Limited flow-sensitive | Dataflow within function bodies |
+| **Inference algorithm** | Bidirectional (Hindley-Milner-influenced) | Constraint-based with target typing (JLS §18) for generics, diamond, and lambdas; `var` is initializer-only | Dataflow within function bodies |
 | **Gradual adoption** | No — fully typed or won't compile | No — types required everywhere | Yes — add types incrementally |
 | **Runtime effect** | Types exist in compiled binary | Types exist in bytecode + runtime | Zero runtime effect |
 
@@ -772,7 +773,11 @@ let x: i32 = 300;
 let y: u8 = x as u8;    // 44 — wraps silently (300 % 256)
 let z: f64 = x as f64;  // 300.0 — lossless
 let w: i32 = 3.99_f64 as i32;  // 3 — truncates toward zero
+let huge: i32 = 1e20_f64 as i32;  // i32::MAX — saturates (since Rust 1.45)
+let nan: i32 = f64::NAN as i32;   // 0 — NaN saturates to zero
 ```
+
+Float-to-integer casts saturate at the destination's range and map `NaN` to `0` since Rust 1.45 (tracking issue [rust-lang/rust#10184](https://github.com/rust-lang/rust/issues/10184), stabilized in [PR #71269](https://github.com/rust-lang/rust/pull/71269)); before that release, out-of-range float-to-int casts were undefined behavior.
 
 **`From<T>` / `Into<T>` — infallible conversions** (implementing `From` gives `Into` for free):
 
@@ -787,14 +792,14 @@ let n: i64 = 42_i32.into();
 **`TryFrom<T>` / `TryInto<T>` — fallible conversions** (return `Result`):
 
 ```rust
-use std::convert::TryFrom;
-
 let big: i32 = 300;
 let small: Result<u8, _> = u8::try_from(big);  // Err — 300 doesn't fit in u8
 
 let valid: i32 = 42;
 let byte: u8 = u8::try_from(valid).unwrap();    // Ok(42)
 ```
+
+`TryFrom` and `TryInto` are part of the prelude in the 2021 and 2024 editions, so `use std::convert::TryFrom;` is no longer required. In the 2015/2018 editions, the trait must still be in scope to call either `u8::try_from(...)` or `.try_into()`.
 
 **Utility conversion traits:**
 
@@ -985,6 +990,8 @@ let value: i32 = match some_option {
 };
 ```
 
+Using `!` as a function return type and the coercion of `!` into any other type are stable. Naming `!` as a general-purpose type elsewhere (e.g. `let x: !`, type parameter, struct field) still requires nightly with `#![feature(never_type)]` — full stabilization (RFC 1216) has been blocked for years on a soundness interaction with type inference. In stable code, the typical idiom is to use the never type via uninhabited enums (`enum Never {}`) when the bottom type is needed in positions where `!` is unstable.
+
 **Dynamically Sized Types (DSTs)** — types whose size is not known at compile time:
 
 | DST | Description | Used as |
@@ -1053,12 +1060,12 @@ class Name implements Comparable<Name> {
 }
 ```
 
-**Project Valhalla** (in progress) aims to fundamentally change Java's type system by introducing **value types** (inline classes) that:
-- Can be generic type arguments without boxing — `List<int>` would finally be possible
-- Are stored inline (no object header, no heap allocation for small values)
-- Enable generic specialization — separate code for primitive types
+**Project Valhalla** (still incubating) aims to change Java's type system by introducing **value classes** that:
+- Drop object identity (no `==`-by-reference semantics, no synchronization), giving the JVM freedom to flatten or scalarize them where profitable — the spec does not mandate inline layout
+- Remain reference types by default; null-restricted and zero-default flavors require additional machinery still being designed
+- Set up future **specialized generics** so `List<int>` can avoid boxing once that work lands
 
-This would eliminate the largest practical limitation of Java generics: the boxing overhead required for primitive types in generic containers.
+The current preview-track JEPs are **JEP 401 — Value Classes and Objects** and **JEP 402 — Enhanced Primitive Boxing**, with **JEP 218 — Generics over Primitive Types** tracking the longer-term specialization story. Until specialization ships, primitive type arguments are still boxed at generic boundaries, so the practical "no `List<int>`" limitation remains.
 
 > **Sources:** Horstmann (2024) Ch.8 pp. 110–116 · Bloch (2018) Ch.5 pp. 140–155 · Naftalin & Wadler (2024) Ch.5–6 · [JLS — Type Erasure](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.6) · [JLS — Intersection Types](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.9) · [JEP 218 — Generics over Primitive Types](https://openjdk.org/jeps/218)
 
@@ -1267,7 +1274,7 @@ String email = findUser(1)
 - **Not recommended for fields or parameters** — per Bloch, `Optional` is intended only as a return type
 - **API adds complexity** — `get()` throws `NoSuchElementException` if empty (as bad as NPE)
 
-**Java 14+** provides "helpful NPEs" (JEP 358) with better error messages that pinpoint which part of a chain was null:
+**JEP 358 — Helpful NullPointerExceptions** shipped behind `-XX:+ShowCodeDetailsInExceptionMessages` in Java 14 and became the default in Java 15. The error message now pinpoints which part of a chain was null:
 
 ```
 java.lang.NullPointerException: Cannot invoke "String.length()"
