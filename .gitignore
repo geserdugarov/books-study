@@ -1,2 +1,15 @@
+# source data
 books/
+
+# sensitive data
 .env
+.env.local
+
+# agents related
+.codex
+.codex-*
+.claude/
+
+# service data
+.claude-review-loop/
+
