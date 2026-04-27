@@ -35,7 +35,7 @@ Java's founding design goals were captured in the famous **"White Paper" buzzwor
 
 Java's success, however, came less from syntax elegance than from its **ecosystem**: libraries for networking, web applications, and concurrency; robust tooling; and integration with computing infrastructure. As Horstmann observes: "The success of a programming language is determined far more by the utility of the support system surrounding it than by the elegance of its syntax."
 
-Sun Microsystems was purchased by **Oracle in 2009**. Development stalled until Java 7 (2011). Java 8 (2014) brought the most significant language changes in nearly two decades (lambdas, streams). Starting in 2018, Java adopted a **six-month release cadence** with LTS versions every two years (11, 17, 21).
+Oracle's acquisition of Sun Microsystems was **announced in 2009 and completed in January 2010**. Development stalled until Java 7 (2011). Java 8 (2014) brought the most significant language changes in nearly two decades (lambdas, streams). Starting in 2018, Java adopted a **six-month release cadence**; LTS versions arrived as Java 11 (2018), 17 (2021), and 21 (2023), with a two-year LTS cadence adopted from Java 21 onward (25 in 2025).
 
 > **Sources:** Horstmann (2024) Ch.1 §1.1–1.5 · Evans et al (2022) Ch.1 pp. 3–25 · Bloch (2018) Ch.1 p. 1
 
@@ -211,7 +211,7 @@ Python is the "glue language" — it plays well with others. Programs can cooper
 
 ### Rust: RFC Process + Editions
 
-Rust is governed by the **Rust Foundation** (established 2021) and a community-driven team structure. Key teams include Lang (language design), Compiler, Library, Cargo, and others.
+Rust's **technical governance** lies with the **Rust Project** — a community-driven structure of teams (Lang, Compiler, Library, Cargo, and others) coordinated by the **Leadership Council**. Language decisions are made by these teams through the RFC process. The **Rust Foundation** (established 2021) is a separate nonprofit that provides legal, financial, and ecosystem support; it does not approve language changes.
 
 **How changes happen:**
 1. Anyone can write an **RFC** (Request for Comments) — a design document proposing a change.
@@ -246,7 +246,7 @@ Evans et al describe how modern Java evolution works through JEPs, with new feat
 
 Python was historically governed by **Guido van Rossum** as **BDFL (Benevolent Dictator for Life)** — he had the final say on what became part of Python. In 2018, Guido retired as BDFL after the contentious PEP 572 (walrus operator) debate.
 
-His decision-making role was taken over by a **Steering Council** — five members elected for yearly terms by PSF (Python Software Foundation) members. The Steering Council may take community debates and votes into account but is not bound by them.
+His decision-making role was taken over by a **Steering Council** — five members elected for yearly terms by **active Python core team members** (per PEP 13), not by the broader PSF (Python Software Foundation) membership. The Steering Council may take community debates and votes into account but is not bound by them.
 
 **PEPs (Python Enhancement Proposals)** are the mechanism for all changes:
 - **Standards Track PEPs** — propose new language features or library changes
@@ -266,7 +266,7 @@ The core team releases **minor versions (3.x)** annually. Each goes through alph
 | **Governing body** | Rust Foundation + community teams | Oracle + JCP | PSF + Steering Council |
 | **Change mechanism** | RFCs | JEPs / JSRs | PEPs |
 | **Decision maker** | Relevant team (consensus-driven) | Oracle / JCP Executive Committee | Steering Council (5 elected members) |
-| **Pace** | 6-week releases + editions every 2–3 years | 6-month releases + LTS every 2 years | Annual releases |
+| **Pace** | 6-week releases + editions every 2–3 years | 6-month releases + LTS (every 3 years initially: 11→17→21; every 2 years from 21 onward) | Annual releases |
 | **Character** | Community-driven, open | Corporate-steered, formal | Community-driven, previously BDFL |
 
 ---
@@ -294,7 +294,7 @@ Java has maintained **binary compatibility since 1996** — compiled `.class` fi
 
 The modern release model (since 2018):
 - **Six-month cadence** — new version every March and September (Java 10, 11, 12, ...)
-- **LTS (Long-Term Support)** versions every two years: Java 11, 17, 21, 25. These receive bug fixes and security updates for several years.
+- **LTS (Long-Term Support)** versions: Java 11 (2018), 17 (2021), 21 (2023), 25 (2025). The cadence was three years between 11→17 and 17→21; Oracle moved to a two-year LTS cadence from Java 21 onward. These releases receive bug fixes and security updates for several years.
 - **Preview features** (JEP 12) allow experimentation: new features can go through several rounds of preview before finalization. For example, pattern matching for `switch` was previewed in Java 17–20 and finalized in Java 21.
 - Production code typically stays on LTS versions without preview features.
 
