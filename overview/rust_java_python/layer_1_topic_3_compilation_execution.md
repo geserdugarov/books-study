@@ -302,8 +302,10 @@ The JVM loads classes lazily — a class is loaded only when it is first referen
 
 **1. Loading**: Finding and creating a binary representation of a class.
 
-Two kinds of class loaders exist:
-- **Bootstrap class loader**: Built into the JVM; loads core platform classes (`java.base`)
+Three built-in loaders form a delegation chain (since JDK 9, replacing the older bootstrap/extension/system trio). The exact split between bootstrap and platform loaders is implementation-defined — some Java SE/JDK modules may be defined by either:
+- **Bootstrap class loader**: Built into the JVM; loads `java.base` and other core platform modules
+- **Platform class loader**: Loads additional Java SE and JDK platform modules not defined by the bootstrap loader (e.g., `java.sql`)
+- **System (application) class loader**: Loads modules and classes from the application classpath/module path
 - **User-defined class loaders**: Subclasses of `ClassLoader`; delegate to parent loaders or define classes directly via `defineClass()`
 
 The distinction between **defining loader** (actually creates the class) and **initiating loader** (any loader in the delegation chain) is important — loading constraints ensure that two different loaders initiating loading of the same class name get the same class, preventing type confusion attacks.
@@ -341,7 +343,7 @@ The code cache is **segmented** into three regions:
 
 **Escape Analysis**: Analyzes whether a new object "escapes" its creating method. Three escape states: GlobalEscape (escapes method/thread), ArgEscape (passed as argument), NoEscape (scalar replaceable). NoEscape objects can have their allocations eliminated entirely — fields are replaced with local variables. Associated locks on non-escaping objects are also removed.
 
-**Compressed Ordinary Object Pointers (CompressedOops)**: On 64-bit systems, managed pointers are represented as 32-bit object offsets scaled by 8 (objects aligned on 8-byte boundaries). This addresses up to ~32 GB of heap with 32-bit references. **Zero-based CompressedOops** requests the OS to start the heap at virtual address zero, eliminating base address addition. Enabled by default when `-Xmx` < 32 GB.
+**Compressed Ordinary Object Pointers (CompressedOops)**: On 64-bit systems, managed pointers are represented as 32-bit object offsets scaled by 8 (objects aligned on 8-byte boundaries). This addresses up to ~32 GB of heap with 32-bit references. **Zero-based CompressedOops** asks the OS to place the heap such that the narrow-oop base can be zero, so decoding reduces to a shift with no heap-base addition. Enabled by default when `-Xmx` < 32 GB.
 
 **Compact Strings (Java SE 9+)**: Changed `String` internal representation from UTF-16 `char[]` to `byte[]` + encoding flag. Latin-1 characters stored as 1 byte instead of 2, saving ~50% memory for most strings.
 
@@ -354,7 +356,7 @@ The code cache is **segmented** into three regions:
 **invokedynamic** (added in Java 7, JSR 292) is the most important bytecode innovation since Java's creation. Unlike other invoke instructions where the target method is fixed in the constant pool, `invokedynamic` defers method resolution to a **bootstrap method** that runs the first time the call site is reached. The bootstrap method returns a `CallSite` object containing a `MethodHandle` — a direct, JIT-optimizable pointer to the target method. Subsequent calls go through the cached `CallSite` with no further bootstrap overhead.
 
 Uses of `invokedynamic`:
-- **Lambda expressions**: Each lambda is compiled to an `invokedynamic` that bootstraps a lightweight anonymous class at first invocation
+- **Lambda expressions**: Each lambda is compiled to an `invokedynamic` whose bootstrap (`LambdaMetafactory`) spins up a hidden class implementing the functional interface at first invocation (since JDK 15 / JEP 371; previously a VM anonymous class)
 - **String concatenation** (Java 9+): `"Hello " + name` compiles to an `invokedynamic` call rather than `StringBuilder` chains, allowing the JVM to choose the optimal concatenation strategy at runtime
 - **Dynamic language support**: JRuby, Jython, Nashorn JavaScript engine all use `invokedynamic` for method dispatch
 
@@ -405,13 +407,13 @@ Native Image operates under the **closed-world assumption**: all bytecode callab
 | Use case | Long-running servers | CLI tools, serverless, microservices |
 
 **Class Data Sharing (CDS)** is a less radical approach to startup optimization. CDS memory-maps pre-processed class metadata from a shared archive at startup:
-- Pre-packaged default archive since JDK 12 (at `lib/[arch]/server/classes.jsa`)
+- Pre-packaged default archive since JDK 12 / JEP 341 (at `lib/server/classes.jsa` on Unix, `bin/server/classes.jsa` on Windows)
 - Multiple JVM processes share the same archive (read-only memory mapping)
 - **Application CDS (AppCDS)** extends this to application classes
-- **Dynamic CDS** automatically archives loaded classes at application exit
-- Controlled via `-XX:+AutoCreateSharedArchive -XX:SharedArchiveFile=app.jsa`
+- **Dynamic CDS** (JDK 13 / JEP 350) automatically archives loaded classes at application exit
+- Auto-creation of the application archive on first run via `-XX:+AutoCreateSharedArchive -XX:SharedArchiveFile=app.jsa` (since JDK 19)
 
-**JEP 295 (jaotc)** was an earlier experimental AOT approach in JDK 9: the `jaotc` tool produced shared libraries (`.so`) using Graal as the code-generating backend. These AOT libraries were treated as an extension of the CodeCache at runtime. A class fingerprinting mechanism validated that bytecode hadn't changed since AOT compilation. Two modes were supported: non-tiered (behaves like statically compiled C++ code) and tiered (collects profiling for later C2 recompilation). This experiment was later superseded by GraalVM Native Image.
+**JEP 295 (jaotc)** was an earlier experimental AOT approach in JDK 9: the `jaotc` tool produced shared libraries (`.so`) using Graal as the code-generating backend. These AOT libraries were treated as an extension of the CodeCache at runtime. A class fingerprinting mechanism validated that bytecode hadn't changed since AOT compilation. Two modes were supported: non-tiered (behaves like statically compiled C++ code) and tiered (collects profiling for later C2 recompilation). The experimental AOT compiler and the experimental Graal JIT integration were both removed in JDK 17 by **JEP 410**; subsequent OpenJDK AOT work moved into **Project Leyden** (in-tree) and **GraalVM Native Image** (separate distribution).
 
 > **Sources:** Evans et al (2022) Ch.7 pp. 230–246 · Oaks (2020) Ch.4 pp. 115–120 · Beckwith (2024) Ch.8 pp. 273–306 · [GraalVM — Compiler](https://www.graalvm.org/latest/reference-manual/java/compiler/) · [GraalVM — Native Image](https://www.graalvm.org/latest/reference-manual/native-image/) · [Oracle — CDS](https://docs.oracle.com/en/java/javase/21/vm/class-data-sharing.html) · [JEP 295](https://openjdk.org/jeps/295)
 
@@ -487,7 +489,7 @@ Key instruction categories:
 | Category | Examples | Purpose |
 |----------|----------|---------|
 | Load/Store | `LOAD_FAST`, `STORE_FAST`, `LOAD_GLOBAL` | Move values between stack and variables |
-| Arithmetic | `BINARY_ADD`, `BINARY_MULTIPLY` | Arithmetic operations |
+| Arithmetic | `BINARY_OP` (3.11+); previously `BINARY_ADD`, `BINARY_MULTIPLY`, … | Arithmetic operations |
 | Control flow | `JUMP_FORWARD`, `POP_JUMP_IF_TRUE` | Branches and jumps |
 | Function calls | `CALL_FUNCTION`, `RETURN_VALUE` | Method/function invocation |
 | Object access | `LOAD_ATTR`, `STORE_ATTR` | Attribute access |
@@ -502,12 +504,16 @@ def add(a, b):
     return a + b
 
 dis.dis(add)
-# Output:
-#   2           0 LOAD_FAST                0 (a)
-#               2 LOAD_FAST                1 (b)
-#               4 BINARY_ADD
-#               6 RETURN_VALUE
+# Output (Python 3.11+):
+#   1           0 RESUME                   0
+#
+#   2           2 LOAD_FAST                0 (a)
+#               4 LOAD_FAST                1 (b)
+#               6 BINARY_OP                0 (+)
+#              10 RETURN_VALUE
 ```
+
+(Pre-3.11 versions emitted a dedicated `BINARY_ADD` opcode instead of `BINARY_OP` and had no `RESUME` instruction.)
 
 The `Instruction` named tuple provides detailed information: `opcode`, `opname`, `arg`, `argval`, `offset`, `line_number`, `is_jump_target`, and `positions` (source line/column mapping).
 
@@ -573,7 +579,7 @@ PEP 659 introduced a **specializing, adaptive interpreter** that speculatively s
 
 Specialized instructions store extra data in **inline cache entries** (16-bit values immediately following the instruction in the bytecode stream). Unspecialized instructions skip over these caches.
 
-**Performance impact**: Speedups of 10–60%, with the largest gains from attribute lookup, global variable access, and call specialization. Memory cost: about 6 bytes per instruction on 64-bit (vs. 2 bytes cold / 7.8 bytes hot in Python 3.10). This is the foundation for the PEP 744 JIT — it generates the profiling information that feeds more sophisticated optimizations.
+**Performance impact**: Speedups of 10–60%, with the largest gains from attribute lookup, global variable access, and call specialization. Memory cost: about 6 bytes per instruction on 64-bit for hot code (vs. 2 bytes cold; the PEP estimates ~7.8 bytes per instruction on average for hot code in Python 3.10 prior to this work). This is the foundation for the PEP 744 JIT — it generates the profiling information that feeds more sophisticated optimizations.
 
 > **Sources:** Gorelick & Ozsvald (2020) Ch.2 pp. 45–64 · [PEP 659](https://peps.python.org/pep-0659/)
 
@@ -595,7 +601,7 @@ The `--disable-gil` build flag produces a **free-threaded** CPython build (ABI t
 
 5. **`Py_mod_gil` Slot**: C extension modules declare GIL requirements. Non-thread-safe extensions can request the GIL be held.
 
-**Subinterpreters** (PEP 554, experimental): CPython supports running multiple independent Python interpreters within a single OS process. Each subinterpreter has its own module namespace, import state, and — crucially — its own GIL. This enables true parallelism for Python code without the complexity of multiprocessing (no serialization overhead for communication). Shaw describes subinterpreters as a middle ground between threads (shared GIL) and processes (separate memory spaces). The `interpreters` module (Python 3.12+) exposes this capability, though it remains experimental with restrictions on sharing objects between interpreters.
+**Subinterpreters** (PEP 734, replacing the earlier deferred PEP 554): CPython supports running multiple independent Python interpreters within a single OS process. Each subinterpreter has its own module namespace, import state, and — crucially — its own GIL. This enables true parallelism for Python code with lower overhead than multiprocessing (shared OS process, no fork/spawn cost), though interpreter isolation still requires queue-based message passing — a small set of immutable types cross directly, while other objects fall back to pickle-style serialization. Shaw describes subinterpreters as a middle ground between threads (shared GIL) and processes (separate memory spaces). Per-interpreter GIL support landed via the C-API in Python 3.12 (PEP 684); the public `concurrent.interpreters` Python module arrived in Python 3.14 (PEP 734), still with restrictions on sharing objects between interpreters.
 
 **Alternative Python implementations**:
 
@@ -929,7 +935,7 @@ Key optimization techniques:
 
 **Polyglot interoperability**: Languages built on Truffle can interoperate seamlessly. A JavaScript program can call a Python function which calls a Ruby function, all within the same VM, sharing objects directly (no serialization, no IPC).
 
-Truffle languages in production: GraalJS (JavaScript), GraalPython (Python), TruffleRuby (Ruby), FastR (R), Sulong (LLVM bitcode — enabling C/C++/Rust), GraalWasm (WebAssembly).
+Truffle languages in production: GraalJS (JavaScript), GraalPython (Python), TruffleRuby (Ruby), FastR (R, in maintenance mode since 2022), Sulong (LLVM bitcode — enabling C/C++/Rust), GraalWasm (WebAssembly).
 
 **Pyodide** takes a different approach to running Python in WASM: it compiles the entire CPython interpreter to WebAssembly using the Emscripten toolchain. Python code executes in the browser with no server-side component. It supports many packages with C/C++/Rust extensions (NumPy, pandas, SciPy, scikit-learn). It provides robust bidirectional JavaScript-Python FFI with async/await interop. Limitations include no native threading, virtualized filesystem, and ~10+ MB WASM binary for the CPython runtime.
 
