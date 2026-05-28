@@ -1,6 +1,9 @@
 # source data
 books/
 
+# converted data
+books_md/
+
 # python virtual environment
 venv/
 

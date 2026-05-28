@@ -50,9 +50,9 @@ python3 -m venv venv
 ./venv/bin/pip install -U opendataloader-pdf
 ```
 
-The `venv/` directory is gitignored. Run the wrapper script to convert
-every PDF under `books/` into Markdown under `books_md/` (both paths can
-be overridden); it invokes `opendataloader-pdf` from `./venv/bin`:
+Run the wrapper script to convert every PDF under `books/`
+into Markdown under `books_md/` (both paths can be overridden);
+it invokes `opendataloader-pdf` from `./venv/bin`:
 
 ```bash
 scripts/convert_pdf_to_md.sh                       # books/ -> books_md/
