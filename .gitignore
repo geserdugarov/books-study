@@ -5,11 +5,18 @@ books/
 .env
 .env.local
 
+# logs and temp
+logs/
+*.log
+*.tmp
+*.bak
+.cache/
+tmp/
+
 # agents related
 .codex
 .codex-*
-.claude/
-
-# service data
-.claude-review-loop/
+.claude/*
+!.claude/skills/
+.develop-review-loop/
 
