@@ -1,6 +1,9 @@
 # source data
 books/
 
+# python virtual environment
+venv/
+
 # sensitive data
 .env
 .env.local
