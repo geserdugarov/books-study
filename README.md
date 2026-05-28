@@ -11,6 +11,8 @@ books/                   # PDF books organized by language/topic
 ├── Python/
 └── distributed-systems/
 
+books_md/                # Generated Markdown of books/ (checked in, see scripts/)
+
 index/                   # Book indices: metadata, TOC, chapter summaries, key topics
 ├── Rust/
 ├── Java/
@@ -22,6 +24,8 @@ plans/                   # Study plans: topic breakdowns, session schedules, rea
 
 overview/                # Compiled overviews synthesizing content from multiple sources
 └── rust_java_python/
+
+scripts/                 # Helper scripts (e.g. PDF → Markdown conversion)
 ```
 
 
@@ -32,6 +36,31 @@ For reading of pdf-files `poppler-utils` is used. To install it in WSL:
 ```bash
 sudo apt -o Acquire::http::Proxy="DIRECT" install poppler-utils
 ```
+
+## PDF → Markdown conversion
+
+Full-text Markdown extraction from books in `books/` is done with
+[opendataloader-pdf](https://github.com/opendataloader-project/opendataloader-pdf).
+
+Prerequisites: Java 11+ and Python 3.10+. Set up a project-local virtual
+environment and install the tool into it:
+
+```bash
+python3 -m venv venv
+./venv/bin/pip install -U opendataloader-pdf
+```
+
+The `venv/` directory is gitignored. Run the wrapper script to convert
+every PDF under `books/` into Markdown under `books_md/` (both paths can
+be overridden); it invokes `opendataloader-pdf` from `./venv/bin`:
+
+```bash
+scripts/convert_pdf_to_md.sh                       # books/ -> books_md/
+scripts/convert_pdf_to_md.sh books/Rust            # only the Rust subtree
+scripts/convert_pdf_to_md.sh books/Rust out/Rust   # custom output directory
+```
+
+Converted Markdown under `books_md/` is checked into the repository.
 
 # Index
 
