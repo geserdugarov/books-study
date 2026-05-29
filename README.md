@@ -11,7 +11,7 @@ books/                   # PDF books organized by language/topic
 ├── Python/
 └── distributed-systems/
 
-books_md/                # Generated Markdown of books/ (checked in, see scripts/)
+books_md/                # Generated Markdown of books/ (gitignored — regenerate via scripts/)
 
 index/                   # Book indices: metadata, TOC, chapter summaries, key topics
 ├── Rust/
@@ -60,7 +60,7 @@ scripts/convert_pdf_to_md.sh books/Rust            # only the Rust subtree
 scripts/convert_pdf_to_md.sh books/Rust out/Rust   # custom output directory
 ```
 
-Converted Markdown under `books_md/` is checked into the repository.
+Converted Markdown under `books_md/` is gitignored — regenerate it locally with this script when you need to compare plans against extracted source text.
 
 # Index
 

@@ -88,7 +88,7 @@ The publishing workflow goes through a staging repository on Sonatype OSSRH (OSS
 
 Maven does **not** have a native lock file. `pom.xml` specifies version ranges, and Maven uses a "nearest-wins" resolution strategy — the first version encountered in the dependency tree wins, which can lead to non-reproducible builds. The Maven Dependency Lock Plugin or Gradle's `--write-locks` provide optional lock file functionality.
 
-> **Sources:** Evans et al (2022) Ch.11 pp. 345–399 · Horstmann (2024) Ch.9 pp. 179–224 · [Sonatype Central Portal](https://central.sonatype.com/) · [Maven Central Publishing Requirements](https://central.sonatype.org/publish/requirements/) · [Maven Central GPG Signing Requirements](https://central.sonatype.org/publish/requirements/gpg/) · [Apache Maven — Introduction to Repositories](https://maven.apache.org/guides/introduction/introduction-to-repositories.html)
+> **Sources:** Evans et al (2022) Ch.11 pp. 345–399 · Horstmann (2024) *Core Java II* Ch.9 pp. 449–504 · [Sonatype Central Portal](https://central.sonatype.com/) · [Maven Central Publishing Requirements](https://central.sonatype.org/publish/requirements/) · [Maven Central GPG Signing Requirements](https://central.sonatype.org/publish/requirements/gpg/) · [Apache Maven — Introduction to Repositories](https://maven.apache.org/guides/introduction/introduction-to-repositories.html)
 
 ### Python: PyPI
 
@@ -199,7 +199,7 @@ module com.example.app {
 
 The large stdlib means Java developers have fewer external dependencies for basic tasks, but the JDK's slower release cycle means stdlib APIs often lag behind third-party alternatives: the JDK HTTP client is less ergonomic than OkHttp; `java.util.logging` is less flexible than SLF4J/Logback. The JDK's backward compatibility guarantee (Java code from 2004 still compiles on JDK 21) means deprecated APIs linger for decades. The `--add-opens` escape hatch is widely used by frameworks (Spring, Hibernate) that rely on deep reflection, partially undermining the encapsulation JPMS provides.
 
-> **Sources:** Horstmann (2024) Ch.12 pp. 293–342 · Evans et al (2022) Ch.2 pp. 26–40 · [JEP 200 — The Modular JDK](https://openjdk.org/jeps/200) · [Oracle JDK Module Summary](https://docs.oracle.com/en/java/javase/21/docs/api/index.html)
+> **Sources:** Horstmann (2024) *Core Java I* Ch.12 pp. 747–774 · Evans et al (2022) Ch.2 pp. 26–40 · [JEP 200 — The Modular JDK](https://openjdk.org/jeps/200) · [Oracle JDK Module Summary](https://docs.oracle.com/en/java/javase/21/docs/api/index.html)
 
 ### Python: Batteries Included and the Dead Batteries Problem
 

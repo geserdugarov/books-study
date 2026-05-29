@@ -127,7 +127,7 @@ CPython 3.11 introduced the **specializing adaptive interpreter**: hot bytecodes
 
 Even specialized CPython is typically **10–100x slower** than equivalent Rust or Java for CPU-bound computation.
 
-> **Sources:** Shaw (2021) Ch.5 pp. 151–175 · Gorelick & Ozsvald (2020) Ch.1 pp. 1–20 · [PEP 744 — JIT Compilation](https://peps.python.org/pep-0744/) · [Faster CPython project](https://github.com/faster-cpython/ideas) · [Python docs — `dis` module](https://docs.python.org/3/library/dis.html) · [PyPy — Architecture](https://doc.pypy.org/en/latest/architecture.html)
+> **Sources:** Shaw (2021) Ch.9 pp. 151–175 · Gorelick & Ozsvald (2020) Ch.1 pp. 1–20 · [PEP 744 — JIT Compilation](https://peps.python.org/pep-0744/) · [Faster CPython project](https://github.com/faster-cpython/ideas) · [Python docs — `dis` module](https://docs.python.org/3/library/dis.html) · [PyPy — Architecture](https://doc.pypy.org/en/latest/architecture.html)
 
 ### Cross-Language Comparison: The Performance Spectrum
 
@@ -276,7 +276,7 @@ Main Python benchmarking pitfalls:
 3. **Warm cache vs cold cache** — CPython caches compiled bytecode (`.pyc`), but first-import overhead is real
 4. **I/O-bound vs CPU-bound** — Python's performance characteristics differ dramatically between these modes
 
-> **Sources:** Shaw (2021) Ch.11 · Slatkin (2025) Items 92–93 pp. 448–457 · Martelli et al (2023) Ch.17 · [Python docs — `timeit`](https://docs.python.org/3/library/timeit.html) · [`pyperf`](https://github.com/psf/pyperf) · [pytest-benchmark](https://pytest-benchmark.readthedocs.io/)
+> **Sources:** Shaw (2021) Ch.16 pp. 346–363 · Slatkin (2025) Items 92–93 pp. 448–457 · Martelli et al (2023) Ch.17 pp. 513–561 · [Python docs — `timeit`](https://docs.python.org/3/library/timeit.html) · [`pyperf`](https://github.com/psf/pyperf) · [pytest-benchmark](https://pytest-benchmark.readthedocs.io/)
 
 ### Cross-Language Comparison: Micro vs Macro Benchmarks
 
@@ -633,7 +633,7 @@ arr = array.array('q', range(1_000_000))  # 'q' = signed long long
 np_arr = np.arange(1_000_000, dtype=np.int64)
 ```
 
-> **Sources:** Shaw (2021) Ch.7 pp. 177–219 · Gorelick & Ozsvald (2020) Ch.11 pp. 341–390 · Slatkin (2025) Item 99 pp. 485–492 · [Python docs — `sys.getsizeof`](https://docs.python.org/3/library/sys.html#sys.getsizeof) · [`pympler`](https://pympler.readthedocs.io/) · [Python docs — `__slots__`](https://docs.python.org/3/reference/datamodel.html#slots)
+> **Sources:** Shaw (2021) Ch.10 pp. 177–219 · Gorelick & Ozsvald (2020) Ch.11 pp. 341–390 · Slatkin (2025) Item 99 pp. 485–492 · [Python docs — `sys.getsizeof`](https://docs.python.org/3/library/sys.html#sys.getsizeof) · [`pympler`](https://pympler.readthedocs.io/) · [Python docs — `__slots__`](https://docs.python.org/3/reference/datamodel.html#slots)
 
 ### Cross-Language Comparison: Memory Footprint of 1 Million 64-bit Integers
 
@@ -1445,10 +1445,10 @@ The final insight: Rust gives you tools for maximum performance and trusts you t
 
 **Python**
 - Gorelick & Ozsvald (2020) — *High Performance Python* · Ch.1 pp. 1–20 (performant Python), Ch.2 pp. 21–64 (profiling), Ch.3–4 pp. 65–95 (data structures), Ch.5 pp. 97–107 (iterators/generators), Ch.6 pp. 109–160 (NumPy), Ch.7 pp. 161–211 (compiling to C), Ch.9 pp. 245–308 (multiprocessing), Ch.11 pp. 341–390 (less RAM)
-- Shaw (2021) — *CPython Internals* · Ch.5 pp. 151–175 (evaluation loop), Ch.7 pp. 177–219 (memory management), Ch.11 (benchmarking)
+- Shaw (2021) — *CPython Internals* · Ch.9 pp. 151–175 (evaluation loop), Ch.10 pp. 177–219 (memory management), Ch.16 pp. 346–363 (benchmarking)
 - Slatkin (2025) — *Effective Python* · Items 92–99 pp. 448–492
 - Ramalho (2022) — *Fluent Python* · Ch.2 pp. 21–76 (sequences), Ch.19–20 pp. 695–772 (concurrency)
-- Martelli et al (2023) — *Python in a Nutshell* · Ch.17 (testing, optimization)
+- Martelli et al (2023) — *Python in a Nutshell* · Ch.17 pp. 513–561 (testing, optimization)
 
 ### External Resources
 

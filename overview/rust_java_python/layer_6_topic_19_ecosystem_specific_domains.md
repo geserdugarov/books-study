@@ -240,7 +240,7 @@ public class ItemResource {
 // Result: ~50ms startup, ~20MB binary, no JVM required
 ```
 
-> **Sources:** Rahman (2025) Ch.7 pp. 297–309 · Horstmann (2024) Ch.5 pp. 76–87 · Evans et al (2022) Ch.12 pp. 401–434 · [Spring Boot documentation](https://docs.spring.io/spring-boot/docs/current/reference/html/) · [Spring Boot Getting Started](https://spring.io/guides/gs/spring-boot/) · [Quarkus documentation](https://quarkus.io/guides/) · [Quarkus Getting Started](https://quarkus.io/guides/getting-started) · [Quarkus — Building native executables](https://quarkus.io/guides/building-native-image) · [Baeldung — Spring Boot Tutorial](https://www.baeldung.com/spring-boot)
+> **Sources:** Rahman (2025) Ch.7 pp. 297–309 · Horstmann (2024) *Core Java II* Ch.5 pp. 297–360 · Evans et al (2022) Ch.12 pp. 401–434 · [Spring Boot documentation](https://docs.spring.io/spring-boot/docs/current/reference/html/) · [Spring Boot Getting Started](https://spring.io/guides/gs/spring-boot/) · [Quarkus documentation](https://quarkus.io/guides/) · [Quarkus Getting Started](https://quarkus.io/guides/getting-started) · [Quarkus — Building native executables](https://quarkus.io/guides/building-native-image) · [Baeldung — Spring Boot Tutorial](https://www.baeldung.com/spring-boot)
 
 ### Python: FastAPI and Django
 
@@ -1535,7 +1535,7 @@ The overarching trend: languages are becoming more complementary rather than com
 
 **Java**
 - Rahman (2025) — *Modern Concurrency in Java* · Ch.7 pp. 297–309 (Spring Boot, Quarkus, virtual threads)
-- Horstmann (2024) — *Core Java II* · Ch.5 pp. 76–87 (JDBC database programming)
+- Horstmann (2024) — *Core Java II* · Ch.5 pp. 297–360 (JDBC database programming)
 - Evans & Gough (2024) — *Optimizing Cloud Native Java* · Ch.14 pp. 377–402 (Kafka, Cassandra, distributed systems)
 - Evans et al (2022) — *The Well-Grounded Java Developer* · Ch.12 pp. 401–434 (Docker, Kubernetes, containers)
 - Bloch (2018) — *Effective Java* · Ch.7 pp. 193–225 (Lambdas and Streams)
