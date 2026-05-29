@@ -403,6 +403,7 @@ Java's virtual thread scheduler uses `ForkJoinPool` as the carrier thread pool. 
 ```java
 import java.util.concurrent.*;
 import java.util.concurrent.StructuredTaskScope;
+import java.util.concurrent.StructuredTaskScope.Subtask;
 
 public class RuntimeExamples {
 
@@ -421,14 +422,15 @@ public class RuntimeExamples {
         vt.join();
     }
 
-    // Structured concurrency — parent scope manages child tasks
+    // Structured concurrency — parent scope manages child tasks (JDK 25 preview, JEP 505)
     static String structuredConcurrency() throws Exception {
-        try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+        // open() defaults to Joiner.awaitAllSuccessfulOrThrow(): fail-fast on any
+        // subtask error and cancel the rest; join() then throws FailedException.
+        try (var scope = StructuredTaskScope.open()) {
             Subtask<String> user = scope.fork(() -> fetchUser());
             Subtask<String> order = scope.fork(() -> fetchOrder());
 
-            scope.join();            // wait for both
-            scope.throwIfFailed();   // propagate exceptions
+            scope.join();            // wait for both (throws on first failure)
 
             return user.get() + " " + order.get();
         }
@@ -441,7 +443,7 @@ Key concepts:
 - **Carrier threads** — virtual threads are mounted on carrier (platform) threads for execution. When a virtual thread blocks (I/O, sleep, lock), the JVM unmounts its stack and mounts another virtual thread on the same carrier.
 - **Transparent interception** — the JVM rewrites blocking operations (`socket.read()`, `Thread.sleep()`, lock acquisition) to yield the carrier thread instead of blocking it. This is invisible to user code.
 - **Pinning** — `synchronized` blocks and native methods **pin** the virtual thread to its carrier, preventing unmounting. This is a limitation: long-running `synchronized` sections can block the carrier. Use `ReentrantLock` instead.
-- **`StructuredTaskScope`** (Java 21+) — parent scope manages child tasks with automatic cancellation and exception propagation. `ShutdownOnFailure` cancels remaining tasks when one fails.
+- **`StructuredTaskScope`** (JDK 25 preview under JEP 505) — parent scope manages child tasks with automatic cancellation and exception propagation. The default `Joiner.awaitAllSuccessfulOrThrow()` (used by `StructuredTaskScope.open()`) cancels remaining tasks when one fails; `Joiner.anySuccessfulResultOrThrow()` races subtasks and cancels the rest when one succeeds. (JDK 26 / JEP 525 renames the race policy to `Joiner.anySuccessfulOrThrow()` and changes `Joiner.allSuccessfulOrThrow()` to return `List<T>`.)
 - **Netty alternative** — Netty uses a small number of event loop threads, each running an I/O multiplexer (`epoll`), processing events via `ChannelHandler` pipelines. This is explicit async I/O requiring callback-based programming. Virtual threads make Netty-style NIO unnecessary for most use cases.
 
 > **Sources:** Rahman (2025) Ch.2 pp. 46–51 · Rahman (2025) Ch.3 pp. 113–123 · Rahman (2025) Ch.6 pp. 249–276 · Lea (1999) Ch.3.4 pp. 199–240 · [JEP 444 — Virtual Threads (scheduling detail)](https://openjdk.org/jeps/444) · [Netty user guide](https://netty.io/wiki/user-guide-for-4.x.html) · [Project Reactor reference](https://projectreactor.io/docs/core/release/reference/)
@@ -864,14 +866,16 @@ public class CancellationExamples {
         executor.shutdown();
     }
 
-    // 3. StructuredTaskScope — hierarchical cancellation
+    // 3. StructuredTaskScope — hierarchical cancellation (JDK 25 preview, JEP 505)
     static String structuredCancellation() throws Exception {
-        try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+        // open() uses the default Joiner.awaitAllSuccessfulOrThrow(): when any
+        // subtask fails, the Joiner cancels the remaining subtasks and join()
+        // throws FailedException wrapping the original cause.
+        try (var scope = StructuredTaskScope.open()) {
             var user = scope.fork(() -> fetchUser());
             var order = scope.fork(() -> fetchOrder());  // if this throws...
 
-            scope.join();
-            scope.throwIfFailed();  // ...ShutdownOnFailure cancels user task
+            scope.join();  // ...the user subtask is cancelled, then join() throws
 
             return user.get() + " " + order.get();
         }
@@ -884,10 +888,10 @@ Key concepts:
 
 - **`Thread.interrupt()`** — sets the interrupt flag. Blocking methods (`sleep`, `wait`, `read`) throw `InterruptedException`. The task must check `Thread.interrupted()` or handle `InterruptedException`. Cooperative: the task decides how to respond.
 - **`Future.cancel(boolean mayInterruptIfRunning)`** — if `mayInterruptIfRunning` is true, interrupts the thread running the task.
-- **Structured concurrency (`StructuredTaskScope`)** — cancellation flows from parent to children. When `shutdown()` is called (e.g., by `ShutdownOnFailure` when one subtask fails), all other subtasks are cancelled (interrupted). Scope exit cancels remaining tasks.
+- **Structured concurrency (`StructuredTaskScope`, JDK 25 preview under JEP 505)** — cancellation flows from parent to children. When the active `Joiner` policy signals termination (e.g., the default `Joiner.awaitAllSuccessfulOrThrow()` on the first failure, or `Joiner.anySuccessfulResultOrThrow()` on the first success — renamed `Joiner.anySuccessfulOrThrow()` in JDK 26 / JEP 525), every other running subtask is cancelled (interrupted). Scope exit cancels remaining tasks.
 - **Cooperative** — the task must respond to interruption. Compare with Rust where drop is unconditional.
 
-> **Sources:** Goetz (2006) Ch.7 pp. 135–161 · Lea (1999) Ch.3.1 pp. 149–170 · Rahman (2025) Ch.4 pp. 125–140 · [JEP 453 — Structured Concurrency](https://openjdk.org/jeps/453) · [Java docs — `Thread.interrupt()`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html#interrupt()) · [Java docs — `Future.cancel()`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/Future.html#cancel(boolean))
+> **Sources:** Goetz (2006) Ch.7 pp. 135–161 · Lea (1999) Ch.3.1 pp. 149–170 · Rahman (2025) Ch.4 pp. 125–140 · [JEP 505 — Structured Concurrency (Fifth Preview, JDK 25)](https://openjdk.org/jeps/505) · [JEP 525 — Structured Concurrency (Sixth Preview, JDK 26)](https://openjdk.org/jeps/525) · [Java docs — `Thread.interrupt()`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html#interrupt()) · [Java docs — `Future.cancel()`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/Future.html#cancel(boolean))
 
 ### Python: `CancelledError` and `TaskGroup`
 
@@ -1387,13 +1391,15 @@ Each language's async model reflects its core values: Rust chose zero-cost abstr
 - Goetz (2006) — *Java Concurrency in Practice*: Ch.5 pp. 79–110 (blocking queues, `FutureTask`), Ch.6 pp. 113–134 (task execution, Executor framework), Ch.7 pp. 135–166 (cancellation and shutdown)
 - Lea (1999) — *Concurrent Programming in Java*: Ch.3 pp. 149–290 (state dependence, concurrency control), Ch.4 pp. 291–382 (creating threads, parallel decomposition)
 - Evans et al (2022) — *The Well-Grounded Java Developer*: Ch.6 pp. 169–205 (concurrent collections, `Future`, `CompletableFuture`), Ch.16 pp. 537–570 (Fork/Join, `CompletableFuture`, coroutines), Ch.18 pp. 609–635 (Project Loom, virtual threads)
+- Evans & Gough (2024) — *Optimizing Cloud Native Java*: Ch.13 pp. 362–375 (asynchronous execution, executors, Fork/Join, parallel streams, actor-based techniques, virtual threads), Ch.15 pp. 405–411 (structured concurrency and scoped values)
 
 **Python**
 - Ramalho (2022) — *Fluent Python*: Ch.17 pp. 593–652 (generators, classic coroutines, `yield from`), Ch.19 pp. 695–738 (concurrency models, GIL), Ch.20 pp. 743–772 (concurrent executors), Ch.21 pp. 775–828 (asyncio, async generators, comprehensions)
-- Slatkin (2025) — *Effective Python*: Item 75 pp. 364–368 (coroutines for concurrent I/O), Item 76 pp. 368–381 (porting threaded I/O to asyncio), Item 77 pp. 381–389 (mixing threads and coroutines), Item 78 pp. 389–393 (async-friendly worker threads), Item 79 pp. 393–398 (`concurrent.futures` for parallelism)
+- Slatkin (2025) — *Effective Python*: Item 75 pp. 364–368 (coroutines for concurrent I/O), Item 76 pp. 368–381 (porting threaded I/O to asyncio), Item 77 pp. 381–389 (mixing threads and coroutines — including `asyncio.TaskGroup` API examples for Python 3.11+), Item 78 pp. 389–393 (async-friendly worker threads), Item 79 pp. 393–398 (`concurrent.futures` for parallelism)
 - Shaw (2021) — *CPython Internals*: pp. 221–283 (GIL, generators, coroutines, async generators, subinterpreters)
 - Hattingh (2020) — *Using Asyncio in Python*: Ch.1–2 pp. 1–20 (introducing asyncio), Ch.3 pp. 21–73 (coroutines, event loop, tasks, graceful shutdown), Ch.4 pp. 75–127 (asyncio libraries in practice)
 - Beazley (2021) — *Python Distilled*: Ch.5.23 pp. 101–137 (async functions and `await`), Ch.6 pp. 139–152 (generators and the bridge to `async`/`await`), Ch.9.14 pp. 247–296 (blocking operations, asyncio)
+- Beazley & Jones (2013) — *Python Cookbook*: Ch.12.12 pp. 524–531 (using generators as an alternative to threads — the cooperative-scheduler pattern that PEP 492 codified into `async`/`await`)
 
 ### External Resources
 
@@ -1427,7 +1433,9 @@ Each language's async model reflects its core values: Rust chose zero-cost abstr
 
 **Java**
 - [JEP 444 — Virtual Threads](https://openjdk.org/jeps/444)
-- [JEP 453 — Structured Concurrency (Preview)](https://openjdk.org/jeps/453)
+- [JEP 505 — Structured Concurrency (Fifth Preview, JDK 25)](https://openjdk.org/jeps/505)
+- [JEP 525 — Structured Concurrency (Sixth Preview, JDK 26)](https://openjdk.org/jeps/525)
+- [JEP 506 — Scoped Values (final, JDK 25)](https://openjdk.org/jeps/506)
 - [Project Loom wiki](https://wiki.openjdk.org/display/loom/Main)
 - [Inside.java — Virtual Threads tag](https://inside.java/tag/loom)
 - [Java docs — `java.util.concurrent.Future`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/Future.html)
