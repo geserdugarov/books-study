@@ -1549,7 +1549,7 @@ Structured concurrency ensures that concurrent task lifetimes match lexical scop
 
 ### Java: `StructuredTaskScope` and Scoped Values
 
-Java 21's `StructuredTaskScope` (preview) enforces that subtasks complete before the scope closes. Joining policies control behavior on success or failure.
+Java's `StructuredTaskScope` (JDK 25 preview under JEP 505 — earlier previews JEP 453/462; requires `--enable-preview`) enforces that subtasks complete before the scope closes. `Joiner` policies passed to `StructuredTaskScope.open(...)` control behavior on success or failure — replacing the JEP 453-era `ShutdownOnFailure` / `ShutdownOnSuccess` factory classes. The examples below use the JDK 25 / Rahman 2025 names; JDK 26 / JEP 525 renames `Joiner.anySuccessfulResultOrThrow()` to `Joiner.anySuccessfulOrThrow()` and changes `Joiner.allSuccessfulOrThrow()` to return `List<T>`.
 
 ```java
 import java.util.concurrent.StructuredTaskScope;
@@ -1569,7 +1569,7 @@ try (var scope = StructuredTaskScope.open()) {
 }
 // Scope is closed — all tasks guaranteed complete
 
-// ShutdownOnFailure — cancel all if any task fails
+// allSuccessfulOrThrow — collect all results; fail-fast if any task fails (cancels the rest)
 try (var scope = StructuredTaskScope.open(
         Joiner.allSuccessfulOrThrow())) {
     Subtask<String> a = scope.fork(() -> fetchA());
@@ -1580,7 +1580,7 @@ try (var scope = StructuredTaskScope.open(
     return combine(a.get(), b.get());
 }
 
-// ShutdownOnSuccess — return first successful result
+// anySuccessfulResultOrThrow — first-past-the-post race; return first success and cancel the rest
 try (var scope = StructuredTaskScope.open(
         Joiner.anySuccessfulResultOrThrow())) {
     scope.fork(() -> fetchFromPrimary());
@@ -1630,11 +1630,11 @@ ScopedValue.where(USER, "alice").run(() -> {
 Key concepts:
 
 - **`StructuredTaskScope`** guarantees all forked subtasks complete (or are cancelled) before the scope closes. Uses try-with-resources for automatic cleanup.
-- **Joining policies** control behavior: `allSuccessfulOrThrow()` cancels remaining tasks on first failure; `anySuccessfulResultOrThrow()` returns the first success and cancels others.
+- **Joining policies** control behavior: `allSuccessfulOrThrow()` cancels remaining tasks on first failure; `anySuccessfulResultOrThrow()` returns the first success and cancels others. (JDK 26 / JEP 525: `anySuccessfulResultOrThrow()` is renamed to `anySuccessfulOrThrow()`, and `allSuccessfulOrThrow()` returns `List<T>` instead of a stream of subtasks.)
 - **`ScopedValue`** replaces `ThreadLocal` for structured concurrency. It is immutable within a scope, automatically inherited by child tasks, and cleaned up when the scope exits. More efficient than `ThreadLocal` (no per-thread HashMap lookup).
 - **Exception handling** is policy-driven — exceptions are collected and can be rethrown or inspected.
 
-> **Sources:** Rahman (2025) Ch.4 pp. 125–214 · Rahman (2025) Ch.5 pp. 217–245 · [JEP 462 — Structured Concurrency (Second Preview)](https://openjdk.org/jeps/462) · [JEP 453 — Structured Concurrency (Preview)](https://openjdk.org/jeps/453) · [JEP 464 — Scoped Values (Second Preview)](https://openjdk.org/jeps/464) · [Java docs — `StructuredTaskScope`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/StructuredTaskScope.html) · [Inside Java — Structured Concurrency](https://inside.java/tag/structured-concurrency)
+> **Sources:** Rahman (2025) Ch.4 pp. 125–214 · Rahman (2025) Ch.5 pp. 217–245 · [JEP 505 — Structured Concurrency (Fifth Preview, JDK 25)](https://openjdk.org/jeps/505) · [JEP 525 — Structured Concurrency (Sixth Preview, JDK 26)](https://openjdk.org/jeps/525) · [JEP 506 — Scoped Values (final, JDK 25)](https://openjdk.org/jeps/506) · [Java docs — `StructuredTaskScope` (JDK 25 preview)](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.html) · [Inside Java — Structured Concurrency](https://inside.java/tag/structured-concurrency)
 
 ### Rust: Scoped Threads and Structured Concurrency
 
@@ -1730,9 +1730,9 @@ Key concepts:
 |--------|------|------|--------|
 | Sync structured concurrency | `std::thread::scope` | `StructuredTaskScope` (preview) | None |
 | Async structured concurrency | Experimental (`async-scoped`, `moro`) | `StructuredTaskScope` works with virtual threads | `asyncio.TaskGroup` (3.11+) |
-| Cancellation policy | Manual (no built-in policy) | Joining policies (`ShutdownOnSuccess`, `ShutdownOnFailure`) | Automatic on exception |
+| Cancellation policy | Manual (no built-in policy) | Joiner policies (`Joiner.anySuccessfulResultOrThrow` / `Joiner.anySuccessfulOrThrow` in JDK 26, `Joiner.awaitAllSuccessfulOrThrow`, `Joiner.allSuccessfulOrThrow`, …) | Automatic on exception |
 | Context propagation | Ownership system (no need) | `ScopedValue` (replaces `ThreadLocal`) | No equivalent |
-| Exception handling | Panics propagated via `join()` | Policy-driven (`throwIfFailed()`) | `ExceptionGroup` + `except*` |
+| Exception handling | Panics propagated via `join()` | Joiner-policy-driven — `scope.join()` throws `StructuredTaskScope.FailedException` wrapping the first subtask failure (JDK 25 / JEP 505; replaces the JEP 453 `ShutdownOnFailure.throwIfFailed()` idiom) | `ExceptionGroup` + `except*` |
 
 Each language's concurrency model reflects its core philosophy:
 - **Rust** enforces safety at compile time — ownership prevents data races, scoped threads enforce structured lifetimes.
@@ -1750,24 +1750,28 @@ Each language's concurrency model reflects its core philosophy:
 - Gjengset (2022) — *Rust for Rustaceans*: Ch.10 pp. 167–192 (concurrency and parallelism)
 - Klabnik & Nichols (2023) — *The Rust Programming Language*: Ch.16 pp. 353–374 (fearless concurrency)
 - Blandy & Orendorff (2017) — *Programming Rust*: Ch.19 pp. 457–497 (concurrency)
+- McNamara (2021) — *Rust in Action*: Ch.10 pp. 328–364 (processes, threads, containers; multithreaded parser/code-generator case study; concurrency and task virtualization)
+- Matthews (2024) — *Code Like a Pro in Rust*: Ch.11.4 pp. 227–229 (parallelization with Rayon — `par_iter`, identity-`reduce`, parallel sorting, `join()` work-stealing, diminishing-returns benchmark)
 
 **Java**
 - Goetz (2006) — *Java Concurrency in Practice*: Ch.1 pp. 1–12 (introduction), Ch.2 pp. 15–31 (thread safety), Ch.3 pp. 33–53 (sharing objects), Ch.4 pp. 55–76 (composing objects), Ch.5 pp. 79–109 (building blocks), Ch.6 pp. 113–133 (task execution), Ch.7 pp. 135–166 (cancellation and shutdown), Ch.8 pp. 167–187 (thread pools), Ch.10 pp. 205–219 (liveness hazards), Ch.11 pp. 221–243 (performance and scalability), Ch.13 pp. 277–289 (explicit locks), Ch.14 pp. 291–317 (custom synchronizers), Ch.15 pp. 319–335 (atomic variables), Ch.16 pp. 337–352 (Java Memory Model)
 - Rahman (2025) — *Modern Concurrency in Java*: Ch.1 pp. 1–30 (introduction), Ch.2 pp. 31–89 (virtual threads), Ch.3 pp. 91–123 (mechanics of modern concurrency), Ch.4 pp. 125–214 (structured concurrency), Ch.5 pp. 217–245 (scoped values)
 - Lea (1999) — *Concurrent Programming in Java*: Ch.1 pp. 1–56 (concurrent OO programming), Ch.2 pp. 57–148 (exclusion), Ch.3 pp. 149–290 (state dependence), Ch.4 pp. 291–382 (creating threads)
 - Bloch (2018) — *Effective Java*: Ch.11 pp. 311–337 (concurrency items 78–84)
-- Horstmann (2024) — *Core Java, Vol. II*: Concurrency chapters
-- Evans et al (2022) — *The Well-Grounded Java Developer*: Ch.6 (Java concurrency fundamentals)
-- Beckwith (2024) — *JVM Performance Engineering*: Threading chapters
-- Oaks (2020) — *Java Performance*: Threading chapters
+- Horstmann (2024) — *Core Java, Vol. I*: Ch.10 (concurrency — running threads, thread states, thread properties, coordinating tasks, synchronization, thread-safe collections, asynchronous computations, processes)
+- Evans et al (2022) — *The Well-Grounded Java Developer*: Ch.5 pp. 119–168 (concurrency theory, hardware, Amdahl's law, JMM, concurrency in bytecode), Ch.6 pp. 169–206 (JDK concurrency libraries — concurrent collections, `Future`/`CompletableFuture`, executors)
+- Evans & Gough (2024) — *Optimizing Cloud Native Java*: Ch.13 pp. 335–375 (concurrent performance techniques — JMM, atomics, locks, executors, Fork/Join, parallel streams, actors, virtual threads), Ch.15 pp. 405–411 (structured concurrency and scoped values)
+- Beckwith (2024) — *JVM Performance Engineering*: Ch.7 pp. 236–272 (monitor locks, lock types in HotSpot, contended-lock optimization since Java 9, spin-wait hints, virtual threads vs the thread-per-request model)
+- Oaks (2020) — *Java Performance*: Ch.9 pp. 267–306 (threading and hardware, `ThreadPoolExecutor` sizing, `ForkJoinPool`, synchronization performance and contention)
 
 **Python**
 - Ramalho (2022) — *Fluent Python*: Ch.19 pp. 695–738 (concurrency models), Ch.20 pp. 743–772 (concurrent executors)
 - Gorelick & Ozsvald (2020) — *High Performance Python*: Ch.8 pp. 213–243 (asynchronous I/O), Ch.9 pp. 245–308 (multiprocessing)
-- Slatkin (2025) — *Effective Python*: Ch.9 pp. 319–397 (concurrency and parallelism items 67–79)
-- Martelli et al (2023) — *Python in a Nutshell*: Concurrency chapters
+- Slatkin (2025) — *Effective Python*: Ch.9 pp. 319–397 (concurrency and parallelism items 67–79; the Item 68 Note on pp. 326–327 covers CPython 3.13's experimental no-GIL/free-threaded build)
+- Martelli et al (2023) — *Python in a Nutshell*: Ch.15 pp. 443–484 (concurrency: threads and processes — `threading`, `queue`, `multiprocessing`, `concurrent.futures`, threaded program architecture, process environment)
 - Shaw (2021) — *CPython Internals*: pp. 221–283 (parallelism and concurrency)
 - Beazley (2021) — *Python Distilled*: Ch.9.14 pp. 247–296 (blocking operations and concurrency)
+- Beazley & Jones (2013) — *Python Cookbook*: Ch.12 pp. 485–538 (concurrency recipes — threads, locks, thread pools, GIL recipe 12.9, actors, pub/sub, generators-as-threads)
 - Hattingh (2020) — *Using Asyncio in Python*: Ch.2 pp. 9–20 (the truth about threads)
 
 ### External Resources
@@ -1804,9 +1808,9 @@ Each language's concurrency model reflects its core philosophy:
 - [Oracle Tutorial — Concurrency](https://docs.oracle.com/javase/tutorial/essential/concurrency/)
 - [JEP 444 — Virtual Threads](https://openjdk.org/jeps/444)
 - [JEP 425 — Virtual Threads (Preview)](https://openjdk.org/jeps/425)
-- [JEP 462 — Structured Concurrency (Second Preview)](https://openjdk.org/jeps/462)
-- [JEP 453 — Structured Concurrency (Preview)](https://openjdk.org/jeps/453)
-- [JEP 464 — Scoped Values (Second Preview)](https://openjdk.org/jeps/464)
+- [JEP 505 — Structured Concurrency (Fifth Preview, JDK 25)](https://openjdk.org/jeps/505)
+- [JEP 525 — Structured Concurrency (Sixth Preview, JDK 26)](https://openjdk.org/jeps/525)
+- [JEP 506 — Scoped Values (final, JDK 25)](https://openjdk.org/jeps/506)
 - [Java docs — `java.lang.Thread`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html)
 - [Java docs — `java.util.concurrent.locks` package](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/locks/package-summary.html)
 - [Java docs — `ReentrantLock`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/locks/ReentrantLock.html)
