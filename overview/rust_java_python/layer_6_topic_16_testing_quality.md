@@ -609,7 +609,7 @@ def test_sort_benchmark(benchmark):
 - **PySpy** — sampling profiler that attaches to running processes without code modification. Useful for production profiling.
 - **`pyperformance`** — the official Python macro-benchmark suite for comparing CPython versions.
 
-> **Sources:** Martelli et al (2023) Ch.17 pp. 540–561 · Shaw (2021) Ch.15 pp. 346–363 · Gorelick & Ozsvald (2020) Ch.2 pp. 21–64 · [Python docs — `timeit`](https://docs.python.org/3/library/timeit.html) · [`pytest-benchmark` documentation](https://pytest-benchmark.readthedocs.io/en/latest/) · [`pytest-benchmark` GitHub repository](https://github.com/ionelmc/pytest-benchmark) · [Python docs — `cProfile`](https://docs.python.org/3/library/profile.html) · [`pyperformance` benchmark suite](https://github.com/python/pyperformance)
+> **Sources:** Martelli et al (2023) Ch.17 pp. 540–561 · Shaw (2021) Ch.16 pp. 346–363 · Gorelick & Ozsvald (2020) Ch.2 pp. 21–64 · [Python docs — `timeit`](https://docs.python.org/3/library/timeit.html) · [`pytest-benchmark` documentation](https://pytest-benchmark.readthedocs.io/en/latest/) · [`pytest-benchmark` GitHub repository](https://github.com/ionelmc/pytest-benchmark) · [Python docs — `cProfile`](https://docs.python.org/3/library/profile.html) · [`pyperformance` benchmark suite](https://github.com/python/pyperformance)
 
 ### Cross-Language Comparison: Benchmarking
 
@@ -1321,7 +1321,7 @@ Coverage anti-patterns:
 | Python | Slatkin (2025) — *Effective Python* | Ch.13 pp. 533–574 |
 | Python | Martelli et al (2023) — *Python in a Nutshell* | Ch.17 pp. 513–561 |
 | Python | Gorelick & Ozsvald (2020) — *High Performance Python* | Ch.2 pp. 21–64 |
-| Python | Shaw (2021) — *CPython Internals* | Ch.15 pp. 346–363 |
+| Python | Shaw (2021) — *CPython Internals* | Ch.16 pp. 346–363 |
 
 ### External Resources
 
