@@ -3,6 +3,16 @@
 > A structured curriculum covering the fundamental concepts, principles, and practices every software engineer should deeply understand — independent of any specific language or technology stack.
 >
 > Topics are organized into progressive layers. Each layer builds on the previous, so they should be studied roughly in order.
+>
+> This plan complements the language-comparative plan at
+> `./plans/rust_java_python/rust_java_python_topics_list.md`: several topics
+> here (type systems, polymorphism, generics, concurrency, error handling,
+> module systems, metaprogramming) overlap with topics there and can reuse the
+> same owned-book chapters. When detailed per-topic plans are written for the
+> sessions below, follow the same workflow as the language plans — citations
+> against the owned-book corpus should be verified against the extracted
+> Markdown in `./books_md/` (regenerated locally via
+> `scripts/convert_pdf_to_md.sh`; gitignored).
 
 ---
 
