@@ -46,7 +46,7 @@ JEPs typically come from Oracle/OpenJDK engineers and represent significant engi
 | Java 11 | 2018 | HTTP Client, `var` in lambdas |
 | Java 17 | 2021 | Sealed classes, pattern matching preview |
 | Java 21 | 2023 | Virtual threads, record patterns, sequenced collections |
-| Java 25 | 2025 | Value classes (Valhalla), further pattern matching |
+| Java 25 | 2025 | Scoped values finalized (JEP 506), compact source files & instance `main` (JEP 512), further pattern matching; Valhalla value classes did **not** ship — JEP 401 still future |
 
 Oracle stewards the OpenJDK specification, but the ecosystem includes **multiple vendors** providing their own builds with different support timelines: Amazon Corretto, Eclipse Temurin, Azul Zulu, Red Hat. This means Java's evolution is both centralized (Oracle drives the specification) and decentralized (multiple vendors compete on support and features).
 
@@ -78,7 +78,7 @@ Python's evolution is profoundly shaped by the **Python 2→3 trauma**. The tran
 | **Proposal mechanism** | RFCs (public PRs, anyone can propose) | JEPs (typically from OpenJDK developers, more formal) | PEPs (anyone can propose, need a sponsor/champion) |
 | **Release cadence** | 6 weeks (stable), editions every ~3 years | 6 months, LTS every 2 years | Annual, support for 5 years |
 | **Experimentation mechanism** | Nightly feature gates (`#![feature(...)]`) | Preview features (`--enable-preview`) | `__future__` imports + experimental build flags |
-| **Breaking change strategy** | Editions (opt-in, interoperable) | Deprecation → removal over multiple LTS cycles (rarely) | DeprecationWarning for 2+ versions before removal |
+| **Breaking change strategy** | Editions (opt-in, interoperable) | Deprecation → removal over multiple LTS cycles (rarely) | DeprecationWarning per PEP 387 — min 2 minor releases, ~5 years preferred, may stay indefinitely |
 | **Governance model** | Decentralized meritocracy | Corporate stewardship with open process | Elected representative democracy |
 
 The governance model directly shapes each language's evolution velocity. Rust evolves fastest at the syntax/library level (six-week releases) but gates major changes behind editions. Java evolves fastest at the JVM/platform level (six-month releases bring platform improvements that benefit all Java versions). Python evolves most cautiously but is currently undergoing its most ambitious transformation period (free-threaded mode + JIT compiler simultaneously).
@@ -472,7 +472,7 @@ def old_function(x):
     )
     return new_function(x)
 
-# Python 3.14+ (PEP 702): decorator-based deprecation
+# Python 3.13+ (PEP 702): decorator-based deprecation
 from warnings import deprecated
 
 @deprecated("Use new_function instead")
@@ -480,7 +480,7 @@ def old_function(x):
     return new_function(x)
 ```
 
-Python's deprecation policy for the standard library: items must be deprecated for at least two releases before removal (e.g., deprecated in 3.11, earliest removal in 3.13).
+Python's deprecation policy (PEP 387) for the standard library: items must be deprecated with `DeprecationWarning` for at least two minor releases before removal (so something deprecated in 3.11 cannot be removed until 3.13 at the earliest), but the policy *prefers* roughly five years and explicitly allows long-deprecated APIs to remain indefinitely when removal would cause too much churn.
 
 **pyupgrade** automates syntax modernization across versions:
 
@@ -626,7 +626,7 @@ fn fibonacci_gen() -> impl Iterator<Item = u64> {
 }
 ```
 
-The `gen` keyword was reserved in the 2024 edition. The broader context: Rust's coroutine design has been evolving since 2016, with generators as a building block for both iterators (sync) and async/await (already stable, implemented via a similar state machine transformation).
+The `gen` keyword was reserved in the 2024 edition for future gen blocks; the gen-block syntax shown above remains a nightly/unstable feature in Rust 1.85 — the reservation just makes the eventual stabilization non-breaking. The broader context: Rust's coroutine design has been evolving since 2016, with generators as a building block for both iterators (sync) and async/await (already stable, implemented via a similar state machine transformation).
 
 Future directions include **async generators** (`async gen { yield value; }`) for asynchronous streaming iterators.
 
@@ -687,7 +687,7 @@ String json = """
         """;
 ```
 
-Upcoming Amber features include unnamed patterns and variables (`_`), and statements before `super()` in constructors.
+Recently delivered and upcoming Amber features include unnamed patterns and variables (`_`, finalized in JDK 22 as JEP 456), statements before `super(...)` / `this(...)` (preview in JDK 22–24, finalized in JDK 25 as JEP 513), and primitive types in patterns/`instanceof`/`switch` (third preview in JDK 25 as JEP 507). The string-templates proposal previewed twice — JEP 430 (JDK 21) and JEP 459 (JDK 22, delivered) — and was then **withdrawn** at the third-preview stage (JEP 465) in 2024; the design is being reworked.
 
 Amber's impact is cumulative: Java 21 code looks significantly different from Java 8 code. Records + sealed classes enable **algebraic data types**, and pattern matching enables a more functional style.
 
@@ -726,22 +726,25 @@ Thread.startVirtualThread(() -> {
 
 Instead of complex thread pool tuning, non-blocking I/O, or reactive programming (Project Reactor, RxJava), developers write simple blocking code on virtual threads and achieve the same scalability.
 
-**Structured concurrency** (preview in Java 21–24) ensures concurrent subtasks are managed as a unit:
+**Structured concurrency** (preview in Java 21–24, still preview as of JDK 25 — JEP 505) ensures concurrent subtasks are managed as a unit:
 
 ```java
-// Structured concurrency: if one subtask fails, others are cancelled
-try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-    Subtask<User> user = scope.fork(() -> findUser(userId));
-    Subtask<Order> order = scope.fork(() -> fetchOrder(orderId));
+// Structured concurrency (JEP 505 / JDK 25 API): default joiner cancels
+// remaining subtasks if any fork fails and rethrows on join().
+try (var scope = StructuredTaskScope.open()) {
+    var user  = scope.fork(() -> findUser(userId));
+    var order = scope.fork(() -> fetchOrder(orderId));
 
-    scope.join().throwIfFailed();  // Wait for both, propagate failures
+    scope.join();  // waits for all forks; throws if any failed
 
     return new Response(user.get(), order.get());
 }
-// All subtasks are guaranteed complete (or cancelled) when the scope exits
+// All subtasks are guaranteed complete (or cancelled) when the scope exits.
+// Other built-in joiners (e.g. StructuredTaskScope.Joiner.anySuccessfulResultOrThrow())
+// are passed to open(Joiner) for different shutdown policies.
 ```
 
-**Scoped values** (preview) replace `ThreadLocal` with a mechanism better suited to virtual threads:
+**Scoped values** (finalized in JDK 25 as JEP 506) replace `ThreadLocal` with a mechanism better suited to virtual threads:
 
 ```java
 static final ScopedValue<User> CURRENT_USER = ScopedValue.newInstance();
@@ -811,9 +814,9 @@ float[] vectorAdd(float[] a, float[] b) {
 }
 ```
 
-### Project Valhalla: Value Classes
+### Project Valhalla: Value Classes (still future — not in JDK 25 GA)
 
-Valhalla eliminates the object header overhead for small, immutable types. Currently, `Integer` (boxed) costs 16 bytes on 64-bit JVM vs `int` (primitive) at 4 bytes.
+Valhalla aims to eliminate the object header overhead for small, immutable types. Currently, `Integer` (boxed) costs 16 bytes on 64-bit JVM vs `int` (primitive) at 4 bytes. JEP 401 ("Value Classes and Objects") is still a submitted/candidate JEP — JDK 25 GA did **not** include value classes; the code below illustrates the proposed syntax, not currently-shipping Java.
 
 ```java
 // Current Java: wrapper types have identity, headers, pointer indirection
@@ -884,11 +887,11 @@ The overarching strategy is **additive evolution**: add new paradigms alongside 
 
 The **GIL (Global Interpreter Lock)** has been CPython's most debated design decision. CPython's reference counting memory management is not thread-safe, so the GIL ensures that only one thread executes Python bytecode at a time. This prevents true multi-threaded parallelism for CPU-bound code.
 
-**PEP 703** (accepted 2023, experimental in Python 3.13+) makes the GIL optional through a specialized build:
+**PEP 703** (accepted 2023, experimental in Python 3.13) shipped a specialized GIL-optional CPython build; **PEP 779** (final, Python 3.14) promotes that build to a supported-but-still-optional configuration:
 
 ```bash
-# Free-threaded CPython build
-python3.13t  # the 't' suffix indicates free-threaded build
+# Free-threaded CPython build (Python 3.13 experimental, 3.14 supported-optional)
+python3.13t  # 't' suffix marks the free-threaded build (3.14 ships python3.14t)
 
 # Check at runtime
 import sys
@@ -906,13 +909,13 @@ The implementation is extraordinarily complex:
 
 The migration challenge is immense: every C extension that assumes the GIL protects its internal state must be audited and potentially rewritten.
 
-Three-phase rollout:
+Multi-phase rollout (per PEP 703 + PEP 779):
 
 | Phase | Version | Status |
 |-------|---------|--------|
-| Phase 1 | Python 3.13 | Opt-in experimental build |
-| Phase 2 | Python 3.14–3.15 | Increasing stability, ecosystem testing |
-| Phase 3 | Future (3.17+?) | Potentially default |
+| Phase I | Python 3.13 | Opt-in experimental build (PEP 703) |
+| Phase II | Python 3.14 | Officially supported, still non-default build (PEP 779) — ecosystem catches up |
+| Phase III | Future | Potentially default once C-extension compatibility and single-threaded perf are addressed |
 
 Performance concern: the free-threaded build may be 5–10% slower for single-threaded workloads due to per-object locking and biased reference counting overhead.
 
@@ -1008,15 +1011,16 @@ Other significant recent features:
 - Per-interpreter GIL (subinterpreters)
 
 **Python 3.13:**
-- Free-threaded build (experimental)
-- JIT compiler (experimental)
+- Free-threaded build (experimental, PEP 703)
+- Copy-and-patch JIT compiler (experimental, PEP 744)
+- `@warnings.deprecated` decorator (PEP 702)
 - Improved error messages
 - `typing.ReadOnly` for TypedDict
 
 **Python 3.14:**
+- Free-threaded build promoted to supported-but-optional (PEP 779)
 - Deferred evaluation of annotations (PEP 649, replacing PEP 563 approach)
-- Template strings (PEP 750)
-- `@warnings.deprecated` decorator (PEP 702)
+- Template strings / t-strings (PEP 750)
 
 ### Python's Identity Evolution
 
@@ -1026,7 +1030,7 @@ Python is undergoing the most dramatic identity shift of the three languages:
 |--------|---------------------------|-------------|
 | Typing | Untyped | Gradual static typing with multiple type checkers |
 | Execution | Pure interpreter | Experimental JIT compiler |
-| Concurrency | GIL-constrained | Experimental free-threaded build |
+| Concurrency | GIL-constrained | Supported-but-optional free-threaded build (PEP 779, 3.14) |
 | Pattern matching | if/elif chains | Structural pattern matching |
 | Subtyping | Duck typing only | Protocols for structural subtyping |
 
@@ -1079,18 +1083,18 @@ import warnings
 
 warnings.warn("Use new_func instead", DeprecationWarning, stacklevel=2)
 
-# Python 3.14+: decorator-based
+# Python 3.13+: decorator-based (PEP 702)
 @warnings.deprecated("Use new_func instead")
 def old_func(): ...
 ```
 
-Python is the most aggressive at actual removal: deprecated features are removed after 2+ versions (typically 2–4 years).
+Python removes more readily than Java but on the PEP 387 horizon: minimum two minor releases of `DeprecationWarning`, ~5 years preferred, and some long-deprecated APIs are kept indefinitely when removal would cause excessive churn.
 
 **The spectrum:**
 
 | | Rust | Python | Java |
 |-|------|--------|------|
-| **Removal strategy** | Via editions (old syntax preserved in old editions) | Removed after 2+ versions | Almost never removed |
+| **Removal strategy** | Via editions (old syntax preserved in old editions) | Min 2 minor releases of DeprecationWarning per PEP 387; ~5 years preferred; some APIs may stay indefinitely | Almost never removed |
 | **Detection tool** | `cargo fix`, Clippy | pyupgrade, ruff | jdeprscan, IDE warnings |
 | **Automation** | `cargo fix --edition` (~95% automatic) | pyupgrade (syntax modernization) | IDE migration assistants |
 | **Ecosystem testing** | Crater (all crates.io) | tox/nox (per-project) | Per-project CI |
@@ -1173,7 +1177,7 @@ This suggests these features address fundamental programming needs regardless of
 - Main challenge: competing with Kotlin for developer mindshare while maintaining enterprise reliability
 
 **Python's trajectory:**
-- Maturing the free-threaded build (potentially default in 3.17+), improving the JIT (targeting 2–5x speedups)
+- Maturing the free-threaded build (PEP 779 supported in 3.14; potentially default in a future release), improving the JIT (targeting 2–5x speedups)
 - Main challenge: the GIL removal is the riskiest evolution — requires the entire C extension ecosystem to adapt
 
 **Cross-language influence:**
@@ -1195,17 +1199,17 @@ This suggests these features address fundamental programming needs regardless of
 
 **Java**
 - Evans et al (2022) — *The Well-Grounded Java Developer*: Ch.1 pp. 3–25 (modern Java, six-month model, JEPs), Ch.3 pp. 55–77 (Java 17 features, preview features), Ch.18 pp. 609–638 (Future Java: Amber, Panama, Loom, Valhalla)
-- Horstmann (2024) — *Core Java I*: Ch.1 pp. 24–31 (history of Java), Ch.11 pp. 140–149 (@Deprecated annotation), Ch.12 pp. 150–167 (JPMS, module migration)
-- Beckwith (2024) — *JVM Performance Engineering*: Ch.1 pp. 1–42 (performance evolution), Ch.2 pp. 43–68 (type system evolution, Valhalla), Ch.8 pp. 273–306 (startup: CDS, AOT, CRaC, Leyden)
+- Horstmann (2024) — *Core Java I*: Ch.1 §1.4 (history of Java), Ch.11 §§11.1–11.3 (@Deprecated annotation), Ch.12 §§12.1–12.10 (JPMS, module migration)
+- Beckwith (2024) — *JVM Performance Engineering*: Ch.1 pp. 1–42 (performance evolution), Ch.2 pp. 43–68 (type system evolution, Valhalla), Ch.3 pp. 69–97 (monolithic to modular Java), Ch.8 pp. 273–306 (startup: CDS, AOT, CRaC, Leyden), Ch.9 pp. 307–336 (Panama, Vector API, hardware acceleration)
 - Evans & Gough (2024) — *Optimizing Cloud Native Java*: Ch.3 p. 73 (release cycle), Ch.15 pp. 405–425 (Loom, Panama, Leyden, Valhalla)
 - Rahman (2025) — *Modern Concurrency in Java*: Ch.1 pp. 1–30 (concurrency evolution, Loom motivation)
 
 **Python**
 - Martelli et al (2023) — *Python in a Nutshell*: Ch.1 pp. 1–19 (history, PEP governance), Ch.5 pp. 171–194 (type annotations), Ch.26 pp. 661–668 (version migration), Appendix pp. 669–685 (features 3.7–3.11)
 - Slatkin (2025) — *Effective Python*: Item 1 p. 1 (version awareness), Item 2 pp. 3–5 (PEP 8), Item 123 pp. 605–612 (warnings for migration), Item 124 pp. 613–620 (typing for static analysis)
-- Ramalho (2022) — *Fluent Python*: Ch.8 pp. 267–306 (type hints, mypy, Protocol), Ch.15 pp. 519–560 (advanced typing, variance)
+- Ramalho (2022) — *Fluent Python*: Ch.8 pp. 253–302 (type hints, mypy, Protocol), Ch.15 pp. 519–560 (advanced typing, variance)
 - Viafore (2021) — *Robust Python*: Part I pp. 19–106 (type annotations, constraining types, gradual adoption)
-- Shaw (2021) — *CPython Internals*: Ch.6 pp. 118–150 (compiler, future flags), Ch.8 pp. 221–283 (GIL, threading, multiprocessing)
+- Shaw (2021) — *CPython Internals*: Ch.8 pp. 118–150 (compiler, future flags), Ch.9 pp. 151–175 (evaluation loop, ceval.c), Ch.11 pp. 221–283 (GIL, threading, multiprocessing)
 
 ### External Resources
 
@@ -1260,11 +1264,21 @@ This suggests these features address fundamental programming needs regardless of
 - [JEP 454 — Foreign Function & Memory API](https://openjdk.org/jeps/454)
 - [Project Amber](https://openjdk.org/projects/amber/)
 - [Project Leyden](https://openjdk.org/projects/leyden/)
+- [JDK 25 release page](https://openjdk.org/projects/jdk/25/)
+- [JEP 505 — Structured Concurrency (5th preview, JDK 25)](https://openjdk.org/jeps/505)
+- [JEP 506 — Scoped Values (finalized, JDK 25)](https://openjdk.org/jeps/506)
+- [JEP 507 — Primitive Types in Patterns, instanceof, switch (3rd preview, JDK 25)](https://openjdk.org/jeps/507)
+- [JEP 512 — Compact Source Files and Instance Main Methods (JDK 25)](https://openjdk.org/jeps/512)
+- [JEP 513 — Flexible Constructor Bodies (statements before super(), finalized JDK 25)](https://openjdk.org/jeps/513)
+- [JEP 456 — Unnamed Variables & Patterns (finalized JDK 22)](https://openjdk.org/jeps/456)
+- [JEP 465 — String Templates (3rd preview, **withdrawn** 2024; earlier previews JEP 430 in JDK 21 and JEP 459 delivered in JDK 22)](https://openjdk.org/jeps/465)
 
 **Major Features: Python**
 - [PEP 703 — Making the GIL Optional](https://peps.python.org/pep-0703/)
+- [PEP 779 — Criteria for supported status for free-threaded Python (final, Python 3.14)](https://peps.python.org/pep-0779/)
 - [Python docs — Free-threaded CPython](https://docs.python.org/3/howto/free-threading-python.html)
 - [PEP 744 — JIT Compilation](https://peps.python.org/pep-0744/)
+- [PEP 702 — Marking deprecations using the type system (`@warnings.deprecated`)](https://peps.python.org/pep-0702/)
 - [Faster CPython project](https://github.com/faster-cpython/ideas)
 - [Python 3.13 What's New](https://docs.python.org/3/whatsnew/3.13.html)
 - [Python 3.14 What's New](https://docs.python.org/3/whatsnew/3.14.html)
@@ -1276,6 +1290,7 @@ This suggests these features address fundamental programming needs regardless of
 - [JEP 277 — Enhanced Deprecation](https://openjdk.org/jeps/277)
 - [jdeprscan tool](https://docs.oracle.com/en/java/javase/21/docs/specs/man/jdeprscan.html)
 - [Java SE Migration Guide](https://docs.oracle.com/en/java/javase/21/migrate/)
+- [PEP 387 — Backwards Compatibility Policy (min 2 minor releases; ~5 years preferred; long-deprecated APIs may stay indefinitely)](https://peps.python.org/pep-0387/)
 - [Python warnings module](https://docs.python.org/3/library/warnings.html)
 - [pyupgrade](https://github.com/asottile/pyupgrade)
 - [Python deprecation policy](https://devguide.python.org/developer-workflow/stdlib.html)
