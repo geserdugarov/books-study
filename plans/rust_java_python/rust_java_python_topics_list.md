@@ -3,6 +3,14 @@
 > A structured curriculum for gaining deep understanding of three fundamentally different programming languages by studying them in parallel, topic by topic.
 >
 > Sections are ordered for progressive learning — each layer builds on concepts from the previous one.
+>
+> Each numbered topic below has a detailed per-topic plan at
+> `./plans/rust_java_python/layer_<i>_topic_<j>_*.md` with an Owned Books table,
+> coverage gaps, external sources, and a session schedule. The prompt templates
+> for producing and reviewing those plans live in
+> `./plans/templates-rust_java_python.md`. Citations in the per-topic plans are
+> verified against the full-text Markdown corpus at `./books_md/` (regenerated
+> locally via `scripts/convert_pdf_to_md.sh`; gitignored).
 
 ---
 
