@@ -348,7 +348,7 @@ b.append(a)  # b → a
 del a, b     # Both have refcount 1 (from each other) — LEAKED without cycle collector
 ```
 
-CPython's **cycle collector** handles this. Through Python 3.13 it uses a **three-generation** algorithm; **Python 3.14.0 redesigned it as an incremental two-generation collector** (gh-108362) that interleaves marking with the interpreter to cap stop-the-world pauses, removing generation 1 and making `threshold2` meaningless. The current 3.14 series (latest release **3.14.4**) still ships this incremental two-generation collector; **a revert to the 3.13 three-generation generational GC is planned for 3.14.5**, which would make generation 1 and `threshold2` live again:
+CPython's **cycle collector** handles this. Through Python 3.13 it uses a **three-generation** algorithm; **Python 3.14.0 redesigned it as an incremental two-generation collector** (gh-108362) that interleaves marking with the interpreter to cap stop-the-world pauses, removing generation 1 and making `threshold2` meaningless. That redesign shipped in 3.14.0 through 3.14.4. **Python 3.14.5 (released 2026-05-10) reverted to the 3.13 three-generation generational GC**, reintroducing generation 1 and restoring `threshold2` behavior on both the default (GIL-enabled) and free-threaded (`--disable-gil`) builds; the free-threaded build additionally guards collection with a process-memory check (described below), but uses the same three generations. On 3.14.5+ the scheduler again uses three generations as in 3.13:
 
 | Generation | Trigger threshold | Collected frequency |
 |------------|------------------|---------------------|
@@ -356,7 +356,7 @@ CPython's **cycle collector** handles this. Through Python 3.13 it uses a **thre
 | Gen 1 | After threshold1 (=10) gen-0 collections | Medium |
 | Gen 2 (old) | After threshold2 (=10) gen-1 collections | Least frequent |
 
-`gc.get_threshold()` returns `(threshold0, threshold1, threshold2)`. Defaults are `(700, 10, 10)` on Python 3.13 (and would return on 3.14.5+ if the planned revert lands); on 3.14.0–3.14.4 the collector is two-generation, so `threshold0` (young) and `threshold1` (old-generation increment scan rate) drive scheduling and the third slot is reported as `0` and otherwise ignored.
+`gc.get_threshold()` returns `(threshold0, threshold1, threshold2)`. Defaults are `(700, 10, 10)` on Python 3.13 and on 3.14.5+ (both default and free-threaded builds); on 3.14.0–3.14.4 the collector is two-generation, so `threshold0` (young) and `threshold1` (old-generation increment scan rate) drive scheduling and the third slot is reported as `0` and otherwise ignored. The free-threaded build of 3.14.5+ adds one extra scheduling check on top of the threshold-based trigger: a collection is **skipped** when process memory has not grown by 10% since the last collection and the net number of object allocations has not exceeded 40 × `threshold0`.
 
 The cycle detection algorithm:
 1. For each container object in the generation, copy its refcount to `gc_refs`
@@ -380,7 +380,7 @@ gc.get_stats()          # Per-generation collection statistics
 
 ### Java Memory Model (JMM)
 
-The Java Memory Model defines visibility rules for shared memory across threads — when one thread's write becomes visible to another. The **happens-before** relationship guarantees that if A happens-before B, then A's effects are visible to B.
+The Java Memory Model defines visibility rules for shared memory across threads — when one thread's write becomes visible to another — via a **happens-before** partial order: if A happens-before B, A's effects are visible to B. The JMM governs visibility, publication, and initialization, **not** which objects the GC may reclaim — reachability from GC roots, computed at safepoints, is what decides that.
 
 **Eight happens-before rules:**
 
@@ -395,9 +395,11 @@ The Java Memory Model defines visibility rules for shared memory across threads 
 
 **Volatile** guarantees visibility and ordering but does **not** provide atomicity for compound operations (`volatile int count; count++;` is not thread-safe — the read-modify-write is not atomic).
 
-**Safepoints** are positions where all application threads can be safely paused for GC (detailed in Section 8).
+**Initialization safety for `final` fields** (Goetz §16.3) is the load-bearing publication guarantee: when a constructor finishes without `this` escaping, the values written to `final` fields are visible to any thread that subsequently reads them, with no further synchronization. This is what makes correctly constructed immutable objects safe to publish via plain references — and it is why immutable classes can be shared across threads without explicit happens-before edges.
 
-> **Sources:** Evans et al (2022) Ch.5 pp. 119–140
+**Safepoints** are positions where all application threads can be safely paused for GC (detailed in Section 8) — that pause is also when the JVM gets the consistent heap snapshot it needs for the reachability scan.
+
+> **Sources:** Evans et al (2022) Ch.5 pp. 119–140 · Goetz et al (2006) Ch.16 pp. 337–352 (§16.1 memory model basics, §16.2 publication, §16.3 initialization safety for `final` fields)
 
 ### Memory Management Comparison
 
@@ -1175,26 +1177,29 @@ CPython's complete memory management picture — allocator layers, reference cou
 
 ### The gc Module and Cycle Collector Internals
 
-CPython's cycle collector uses a **generational tri-color marking algorithm**. Through Python 3.13 it scheduled three generations as described above; **Python 3.14.0 made the collector incremental** — old-generation work was split across many invocations to avoid long stop-the-world pauses, generation 1 was removed, and `threshold2` was no longer meaningful. The current 3.14 series (latest release **3.14.4**) still ships the incremental collector; **a revert to the 3.13 three-generation generational GC is planned for 3.14.5**, which would make generation 1 and `threshold2` live again.
+CPython's cycle collector uses a **generational tri-color marking algorithm**. Through Python 3.13 it scheduled three generations as described above; **Python 3.14.0 made the collector incremental** — old-generation work was split across many invocations to avoid long stop-the-world pauses, generation 1 was removed, and `threshold2` was no longer meaningful. That incremental design shipped in 3.14.0 through 3.14.4. **Python 3.14.5 (released 2026-05-10) reverted to the 3.13 three-generation generational GC** on both the default (GIL-enabled) and free-threaded (`--disable-gil`) builds, reintroducing generation 1 and restoring `threshold2` behavior; the free-threaded build additionally gates collection on a process-memory check (see comments below).
 
 ```python
 import gc
 
 # get_threshold() returns (threshold0, threshold1, threshold2).
-# 3.13 (and 3.14.5+ if the planned revert lands):
+# 3.13 and 3.14.5+ (default and free-threaded builds):
 #                   all three values drive scheduling (gen0, gen1, gen2);
 #                   default (700, 10, 10).
 # 3.14.0–3.14.4:    two-generation incremental collector — only threshold0
 #                   (young) and threshold1 (old-gen increment scan rate) are
 #                   honored; the third slot is reported as 0 and otherwise
 #                   ignored, and gen1 is absent.
-gc.get_threshold()   # (700, 10, 10) on 3.13; planned for 3.14.5+
+gc.get_threshold()   # (700, 10, 10) on 3.13 and on 3.14.5+
 
 # Scheduling rules:
-# 3.13 (and 3.14.5+ if the planned revert lands):
+# 3.13 and 3.14.5+ (three-generation generational GC):
 #   gen0 collects when: allocations - deallocations > threshold0
 #   gen1 collects when: gen0 has collected threshold1 times since last gen1 collection
 #   gen2 collects when: gen1 has collected threshold2 times since last gen2 collection
+# Free-threaded build of 3.14.5+ adds one extra guard on top of the above:
+#   a collection is SKIPPED unless process memory has grown >=10% since the
+#   last collection OR net allocations have exceeded 40 * threshold0.
 # 3.14.0-3.14.4 (incremental, two-generation):
 #   young (gen0) collects when: allocations - deallocations > threshold0
 #   old generation is scanned incrementally; threshold1 controls how much
