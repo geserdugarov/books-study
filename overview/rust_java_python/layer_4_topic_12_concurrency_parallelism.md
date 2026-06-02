@@ -225,11 +225,11 @@ Key concepts:
 - **GIL contention degrades performance** — CPU-bound threaded code is slower than sequential due to context switching and lock acquisition overhead.
 - **Many high-performance libraries already bypass the GIL** — NumPy, pandas, scikit-learn release the GIL in their C/Fortran/Rust backends. The GIL primarily constrains pure Python CPU-bound code.
 
-> **Sources:** Ramalho (2022) Ch.19 pp. 713–724 · Shaw (2021) pp. 221–260 · [Python Wiki — Global Interpreter Lock](https://wiki.python.org/moin/GlobalInterpreterLock) · [Real Python — Python's GIL: A Guide to the Global Interpreter Lock](https://realpython.com/python-gil/)
+> **Sources:** Ramalho (2022) Ch.19 pp. 713–724 · Shaw (2021) pp. 221–260 · Beazley & Jones (2013) Recipe 12.9 pp. 513–516 · [Python Wiki — Global Interpreter Lock](https://wiki.python.org/moin/GlobalInterpreterLock) · [Real Python — Python's GIL: A Guide to the Global Interpreter Lock](https://realpython.com/python-gil/)
 
 ### PEP 703: Free-Threaded Python
 
-PEP 703 (Sam Gross, accepted 2023) makes the GIL optional. The `--disable-gil` build flag produces a CPython binary where threads achieve true parallelism. This is a phased rollout: Python 3.13 includes experimental free-threaded builds; Python 3.14+ refines the approach.
+PEP 703 (Sam Gross, accepted 2023) makes the GIL optional. The `--disable-gil` build flag produces a CPython binary where threads achieve true parallelism. The rollout is phased: Python 3.13 shipped the first free-threaded builds as experimental. Python 3.14 (PEP 779, accepted 2025) promotes the free-threaded build to an officially **supported** but still optional configuration — the GIL-enabled build remains the default, and ecosystem migration (especially C extensions) is the gating concern for promoting free-threaded to the default in a later release.
 
 Key changes in free-threaded CPython:
 
@@ -241,7 +241,7 @@ Key changes in free-threaded CPython:
 
 The `PYTHON_GIL=0` environment variable or `python -X gil=0` disables the GIL at runtime on free-threaded builds.
 
-> **Sources:** [PEP 703 — Making the Global Interpreter Lock Optional in CPython](https://peps.python.org/pep-0703/) · [Python 3.13 What's New — Free-threaded CPython](https://docs.python.org/3.13/whatsnew/3.13.html#free-threaded-cpython) · [Python docs — Free-threaded CPython](https://docs.python.org/3.13/howto/free-threading-python.html) · [Sam Gross — nogil project](https://github.com/colesbury/nogil)
+> **Sources:** Slatkin (2025) Item 68 pp. 326–327 (the Note on CPython 3.13's experimental no-GIL build and its trade-offs) · [PEP 703 — Making the Global Interpreter Lock Optional in CPython](https://peps.python.org/pep-0703/) · [PEP 779 — Criteria for supported status for free-threaded Python (3.14)](https://peps.python.org/pep-0779/) · [Python 3.13 What's New — Free-threaded CPython](https://docs.python.org/3.13/whatsnew/3.13.html#free-threaded-cpython) · [Python 3.14 What's New — Free-threaded Python is officially supported](https://docs.python.org/3.14/whatsnew/3.14.html#whatsnew314-free-threaded-cpython) · [Python docs — Free-threaded CPython (3.14)](https://docs.python.org/3.14/howto/free-threading-python.html) · [Sam Gross — nogil project](https://github.com/colesbury/nogil)
 
 ### How Rust and Java Avoid the GIL Problem
 
@@ -251,7 +251,7 @@ Java avoids the need for a GIL because the JVM uses a tracing garbage collector 
 
 Both Rust and Java demonstrate that a GIL is not inherent to programming languages — it is a CPython implementation choice driven by the simplicity of reference counting.
 
-**Ecosystem implications:** Rust has no issue — all threads run in parallel, the compiler ensures safety. Java has no issue — all threads run in parallel, programmer ensures safety via synchronization. Python forces a choice: (a) threads for I/O concurrency, (b) multiprocessing for CPU parallelism, (c) C extensions that release the GIL, or (d) free-threaded Python 3.13+ (experimental).
+**Ecosystem implications:** Rust has no issue — all threads run in parallel, the compiler ensures safety. Java has no issue — all threads run in parallel, programmer ensures safety via synchronization. Python forces a choice: (a) threads for I/O concurrency, (b) multiprocessing for CPU parallelism, (c) C extensions that release the GIL, or (d) the free-threaded build — experimental in Python 3.13 and officially supported (still opt-in) from Python 3.14 onward under PEP 779.
 
 > **Sources:** Bos (2023) Ch.1 pp. 16–17 · Goetz (2006) Ch.16 pp. 337–352 · Ramalho (2022) Ch.19 pp. 724–738
 
@@ -310,7 +310,7 @@ Key concepts:
 - **`'static` requirement** for `spawn` means the closure must own all captured data. Scoped threads (`thread::scope`) relax this.
 - **Rayon's `join(a, b)`** is a higher-level fork-join API using a work-stealing thread pool, avoiding the overhead of OS thread creation.
 
-> **Sources:** Bos (2023) Ch.1 pp. 2–6 · Klabnik & Nichols (2023) Ch.16 pp. 353–360 · Blandy & Orendorff (2017) Ch.19 pp. 459–468 · [Rust docs — `std::thread` module](https://doc.rust-lang.org/std/thread/) · [Rust docs — `thread::spawn`](https://doc.rust-lang.org/std/thread/fn.spawn.html) · [Rust docs — `thread::scope`](https://doc.rust-lang.org/std/thread/fn.scope.html)
+> **Sources:** Bos (2023) Ch.1 pp. 2–6 · Klabnik & Nichols (2023) Ch.16 pp. 353–360 · Blandy & Orendorff (2017) Ch.19 pp. 459–468 · McNamara (2021) Ch.10 pp. 330–340 (spawn-count cost curve and shared-variable patterns) · [Rust docs — `std::thread` module](https://doc.rust-lang.org/std/thread/) · [Rust docs — `thread::spawn`](https://doc.rust-lang.org/std/thread/fn.spawn.html) · [Rust docs — `thread::scope`](https://doc.rust-lang.org/std/thread/fn.scope.html)
 
 ### Java: Platform Threads vs Virtual Threads
 
@@ -1228,7 +1228,7 @@ Key concepts:
 - **`rayon::join(a, b)`** forks two closures and joins them. Structured parallelism — both complete before `join` returns.
 - **`rayon::scope`** allows spawning tasks that can borrow from the parent stack, similar to `std::thread::scope`.
 
-> **Sources:** Blandy & Orendorff (2017) Ch.19 pp. 466–470 · Gjengset (2022) Ch.10 pp. 175–179 · [Rayon crate documentation](https://docs.rs/rayon/latest/rayon/) · [Rayon — `par_iter` and parallel iterators](https://docs.rs/rayon/latest/rayon/iter/index.html) · [`threadpool` crate documentation](https://docs.rs/threadpool/latest/threadpool/)
+> **Sources:** Blandy & Orendorff (2017) Ch.19 pp. 466–470 · Matthews (2024) Ch.11.4 pp. 227–229 (identity-`reduce`, diminishing-returns benchmark, parallel sorting, `join()` work-stealing) · Gjengset (2022) Ch.10 pp. 175–179 · [Rayon crate documentation](https://docs.rs/rayon/latest/rayon/) · [Rayon — `par_iter` and parallel iterators](https://docs.rs/rayon/latest/rayon/iter/index.html) · [`threadpool` crate documentation](https://docs.rs/threadpool/latest/threadpool/)
 
 ### Java: `ExecutorService`, `ForkJoinPool`, and Virtual Thread Executors
 
@@ -1313,7 +1313,7 @@ Key concepts:
 - **Virtual threads should not be pooled** — they are cheap to create. Use per-task executors instead.
 - **`CompletableFuture`** enables composable async pipelines with `thenApply`, `thenCompose`, `thenCombine`.
 
-> **Sources:** Goetz (2006) Ch.6 pp. 117–133 · Goetz (2006) Ch.8 pp. 167–181 · Lea (1999) Ch.4 pp. 291–382 · Rahman (2025) Ch.3 pp. 91–112 · Bloch (2018) Item 80 pp. 323–325 · [Java docs — `ExecutorService`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ExecutorService.html) · [Java docs — `Executors`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/Executors.html) · [Java docs — `ForkJoinPool`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ForkJoinPool.html) · [Baeldung — Guide to the Java ExecutorService](https://www.baeldung.com/java-executor-service-tutorial) · [Baeldung — Guide to the Fork/Join Framework](https://www.baeldung.com/java-fork-join)
+> **Sources:** Goetz (2006) Ch.6 pp. 117–133 · Goetz (2006) Ch.8 pp. 167–181 · Lea (1999) Ch.4 pp. 291–382 · Rahman (2025) Ch.3 pp. 91–112 · Evans & Gough (2024) Ch.13 pp. 362–375 (executors and task abstraction, Fork/Join sizing and selection guidance, virtual-thread concurrency patterns) · Bloch (2018) Item 80 pp. 323–325 · [Java docs — `ExecutorService`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ExecutorService.html) · [Java docs — `Executors`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/Executors.html) · [Java docs — `ForkJoinPool`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ForkJoinPool.html) · [Baeldung — Guide to the Java ExecutorService](https://www.baeldung.com/java-executor-service-tutorial) · [Baeldung — Guide to the Fork/Join Framework](https://www.baeldung.com/java-fork-join)
 
 ### Python: `concurrent.futures`
 
@@ -1634,7 +1634,7 @@ Key concepts:
 - **`ScopedValue`** replaces `ThreadLocal` for structured concurrency. It is immutable within a scope, automatically inherited by child tasks, and cleaned up when the scope exits. More efficient than `ThreadLocal` (no per-thread HashMap lookup).
 - **Exception handling** is policy-driven — exceptions are collected and can be rethrown or inspected.
 
-> **Sources:** Rahman (2025) Ch.4 pp. 125–214 · Rahman (2025) Ch.5 pp. 217–245 · [JEP 505 — Structured Concurrency (Fifth Preview, JDK 25)](https://openjdk.org/jeps/505) · [JEP 525 — Structured Concurrency (Sixth Preview, JDK 26)](https://openjdk.org/jeps/525) · [JEP 506 — Scoped Values (final, JDK 25)](https://openjdk.org/jeps/506) · [Java docs — `StructuredTaskScope` (JDK 25 preview)](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.html) · [Inside Java — Structured Concurrency](https://inside.java/tag/structured-concurrency)
+> **Sources:** Rahman (2025) Ch.4 pp. 125–214 · Rahman (2025) Ch.5 pp. 217–245 · Evans & Gough (2024) Ch.15 pp. 405–411 (structured concurrency and scoped values within the JVM modernization arc) · [JEP 505 — Structured Concurrency (Fifth Preview, JDK 25)](https://openjdk.org/jeps/505) · [JEP 525 — Structured Concurrency (Sixth Preview, JDK 26)](https://openjdk.org/jeps/525) · [JEP 506 — Scoped Values (final, JDK 25)](https://openjdk.org/jeps/506) · [Java docs — `StructuredTaskScope` (JDK 25 preview)](https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/StructuredTaskScope.html) · [Inside Java — Structured Concurrency](https://inside.java/tag/structured-concurrency)
 
 ### Rust: Scoped Threads and Structured Concurrency
 
@@ -1722,7 +1722,7 @@ Key concepts:
 - **Trio's nurseries** pioneered structured concurrency in Python. Nathaniel J. Smith's blog post argues that fire-and-forget concurrency (`go`-statement style) is as harmful as `goto`.
 - **No structured concurrency for threads** — Python has no equivalent of Rust's `thread::scope` or Java's `StructuredTaskScope` for `threading.Thread`.
 
-> **Sources:** [Python docs — `asyncio.TaskGroup`](https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup) · [PEP 654 — Exception Groups and `except*`](https://peps.python.org/pep-0654/) · [Trio — Structured concurrency for Python](https://trio.readthedocs.io/en/stable/) · ["Notes on structured concurrency" by Nathaniel J. Smith](https://vorpus.org/blog/notes-on-structured-concurrency-or-go-statement-considered-harmful/)
+> **Sources:** Slatkin (2025) Item 77 pp. 381–389 (especially pp. 384–388 introducing `asyncio.TaskGroup` in Python 3.11+) · [Python docs — `asyncio.TaskGroup`](https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup) · [PEP 654 — Exception Groups and `except*`](https://peps.python.org/pep-0654/) · [Trio — Structured concurrency for Python](https://trio.readthedocs.io/en/stable/) · ["Notes on structured concurrency" by Nathaniel J. Smith](https://vorpus.org/blog/notes-on-structured-concurrency-or-go-statement-considered-harmful/)
 
 ### Cross-Language Comparison
 
@@ -1853,12 +1853,14 @@ Each language's concurrency model reflects its core philosophy:
 - [Python docs — `multiprocessing.Manager`](https://docs.python.org/3/library/multiprocessing.html#managers)
 - [Python docs — `queue.Queue`](https://docs.python.org/3/library/queue.html)
 - [Python docs — `asyncio.TaskGroup`](https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup)
-- [Python docs — Free-threaded CPython](https://docs.python.org/3.13/howto/free-threading-python.html)
+- [Python docs — Free-threaded CPython (3.14)](https://docs.python.org/3.14/howto/free-threading-python.html)
 - [Python Wiki — Global Interpreter Lock](https://wiki.python.org/moin/GlobalInterpreterLock)
 - [PEP 703 — Making the Global Interpreter Lock Optional in CPython](https://peps.python.org/pep-0703/)
+- [PEP 779 — Criteria for supported status for free-threaded Python (3.14)](https://peps.python.org/pep-0779/)
 - [PEP 654 — Exception Groups and `except*`](https://peps.python.org/pep-0654/)
 - [PEP 371 — Addition of the multiprocessing package](https://peps.python.org/pep-0371/)
 - [Python 3.13 What's New — Free-threaded CPython](https://docs.python.org/3.13/whatsnew/3.13.html#free-threaded-cpython)
+- [Python 3.14 What's New — Free-threaded Python is officially supported](https://docs.python.org/3.14/whatsnew/3.14.html#whatsnew314-free-threaded-cpython)
 - [Sam Gross — nogil project](https://github.com/colesbury/nogil)
 - [Real Python — An Intro to Threading in Python](https://realpython.com/intro-to-python-threading/)
 - [Real Python — Python's GIL: A Guide](https://realpython.com/python-gil/)
