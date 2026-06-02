@@ -326,7 +326,9 @@ def get_item(request, item_id):
 # for building APIs with even less boilerplate.
 ```
 
-> **Sources:** Ramalho (2022) Ch.21 pp. 775–832 · Martelli et al (2023) Ch.20 pp. 597–609 · Hattingh (2020) Ch.4 pp. 75–127 · [FastAPI documentation](https://fastapi.tiangolo.com/) · [FastAPI tutorial](https://fastapi.tiangolo.com/tutorial/) · [Django documentation](https://docs.djangoproject.com/) · [Django tutorial](https://docs.djangoproject.com/en/5.0/intro/tutorial01/) · [Flask documentation](https://flask.palletsprojects.com/) · [Starlette documentation](https://www.starlette.io/)
+The async-first Python web ecosystem extends beyond FastAPI. Hattingh (Ch.4) surveys the layer beneath: **aiohttp** (a full HTTP client/server built directly on asyncio with its own server stack — not ASGI), **Sanic** (a Flask-inspired async framework that predates FastAPI and remains popular for raw-throughput APIs; ships its own production server but is also ASGI-compliant, so it can run under uvicorn/hypercorn alongside FastAPI/Starlette apps), and **asyncpg** (the fastest async PostgreSQL driver — a Sanic + asyncpg stack is a common pattern for database-backed services where each request is dominated by I/O wait). The shared design point is the asyncio event-loop model: cooperative `async`/`await` lets a single process keep thousands of in-flight requests without one-thread-per-connection overhead. The server-interface layer is where the frameworks diverge — FastAPI and Starlette are ASGI-native, Sanic supports both its own server and ASGI, and aiohttp stands apart with its own asyncio-native server stack. Middleware, mountable sub-apps, and WebSocket support exist across all of them (aiohttp and Sanic each ship native WebSocket APIs); FastAPI's distinguishing value over Starlette is the type-hint-driven validation, OpenAPI generation, and dependency-injection layer rather than the underlying transport.
+
+> **Sources:** Ramalho (2022) Ch.21 pp. 775–832 · Martelli et al (2023) Ch.20 pp. 597–609 · Hattingh (2020) Ch.4 pp. 75–127 · [FastAPI documentation](https://fastapi.tiangolo.com/) · [FastAPI tutorial](https://fastapi.tiangolo.com/tutorial/) · [Django documentation](https://docs.djangoproject.com/) · [Django tutorial](https://docs.djangoproject.com/en/5.0/intro/tutorial01/) · [Flask documentation](https://flask.palletsprojects.com/) · [Starlette documentation](https://www.starlette.io/) · [aiohttp documentation](https://docs.aiohttp.org/) · [Sanic documentation](https://sanic.dev/) · [asyncpg documentation](https://magicstack.github.io/asyncpg/)
 
 ### Cross-Language Comparison: Web Framework Philosophy Spectrum
 
@@ -1568,6 +1570,9 @@ The overarching trend: languages are becoming more complementary rather than com
 - [Django tutorial](https://docs.djangoproject.com/en/5.0/intro/tutorial01/)
 - [Flask documentation](https://flask.palletsprojects.com/)
 - [Starlette documentation](https://www.starlette.io/)
+- [aiohttp documentation](https://docs.aiohttp.org/)
+- [Sanic documentation](https://sanic.dev/)
+- [asyncpg documentation](https://magicstack.github.io/asyncpg/)
 
 **Data Processing & Analytics**
 - [Polars User Guide](https://docs.pola.rs/)

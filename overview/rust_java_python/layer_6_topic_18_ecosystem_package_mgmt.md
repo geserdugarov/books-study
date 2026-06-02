@@ -600,6 +600,28 @@ class User(Base):
 
 Supply chain security addresses the risk that a dependency — direct or transitive — introduces vulnerabilities or malicious code. Each ecosystem has developed its own tooling, advisory databases, and mitigation strategies.
 
+### Dependencies as Liabilities: Mapping the Graph Before Securing It
+
+Viafore (Ch.16) frames every dependency as a one-way relationship in which the consumer is "beholden" to code controlled by someone else — useful, but a liability. The chapter distinguishes three kinds of dependencies, each with a different failure mode:
+
+- **Physical dependencies** — explicit `Cargo.toml` / `pom.xml` / `pyproject.toml` entries, visible via `cargo tree`, `mvn dependency:tree`, or `pipdeptree`.
+- **Logical dependencies** — implicit contracts (a shared message format, a JSON schema, an environment variable) that do not appear in any manifest but break consumers when violated.
+- **Temporal dependencies** — order-of-execution coupling (one service must be initialized before another, one migration must run before a column is read) invisible to dependency-graph tools.
+
+Even within the physical-dependency layer, the *transitive* graph is where most surprises live: JavaScript's 2016 left-pad removal broke thousands of projects that did not list left-pad in their own manifest but pulled it in through registry-resolved transitive dependencies. Visualization is the prerequisite for triage: before running `cargo audit` or `pip-audit`, generate the full transitive graph and look for unexpected paths — a CLI tool transitively depending on a cryptography crate, a small library pulling in tens of megabytes, or multiple incompatible versions of the same crate in one tree. Logical and temporal coupling are a separate failure mode that dependency-graph tools do not surface at all: a consumer that parses a producer's JSON schema, or a service that assumes another has finished a migration, breaks even when every physical version pin is satisfied. Catching those requires contract tests and ordering checks, not the dependency graph.
+
+```bash
+# Physical dependency visualization across the three ecosystems
+cargo tree                       # Rust: full transitive tree, marks duplicates
+cargo tree --duplicates          # Rust: only versions duplicated in the graph
+mvn dependency:tree              # Java: full Maven dependency tree
+mvn dependency:analyze           # Java: unused declared / undeclared used deps
+pipdeptree                       # Python: transitive tree from installed env
+pipdeptree --reverse --packages requests  # who pulls in `requests`?
+```
+
+> **Sources:** Viafore (2021) Ch.16 pp. 225–241 · [`cargo tree`](https://doc.rust-lang.org/cargo/commands/cargo-tree.html) · [Maven Dependency Plugin](https://maven.apache.org/plugins/maven-dependency-plugin/) · [pipdeptree](https://github.com/tox-dev/pipdeptree)
+
 ### Rust: cargo-audit, cargo-vet, and cargo-deny
 
 Rust has the most structured approach to dependency auditing, with three composable tools:
