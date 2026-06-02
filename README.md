@@ -20,7 +20,7 @@ index/                   # Book indices: metadata, TOC, chapter summaries, key t
 └── distributed-systems/
 
 plans/                   # Study plans: topic breakdowns, session schedules, reading lists
-└── rust_java_python/
+└── essential_knowledge/
 
 overview/                # Compiled overviews synthesizing content from multiple sources
 └── rust_java_python/
