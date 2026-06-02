@@ -211,7 +211,7 @@ ScopedValue.runWhere(USER, "Alice", () -> {
 });
 ```
 
-> **Sources:** Horstmann (2024) Ch.3 pp. 41–52 · Bloch (2018) Item 17 pp. 80–86 · Evans et al. (2022) Ch.3 pp. 55–68 · Goetz et al. (2006) Ch.3 pp. 46–54 (§3.4–3.5 Immutability, Safe Publication) · Rahman (2025) Ch.5 pp. 217–230 · [JLS — final Variables](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.12.4) · [JLS — final Field Semantics](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.5) · [JEP 395 — Records](https://openjdk.org/jeps/395) · [JEP 481 — Scoped Values](https://openjdk.org/jeps/481)
+> **Sources:** Horstmann (2024) Ch.3 pp. 41–52 · Bloch (2018) Item 17 pp. 80–86 · Evans et al. (2022) Ch.3 pp. 55–68 · Goetz et al. (2006) Ch.3 pp. 46–54 (§3.4–3.5 Immutability, Safe Publication), Ch.4 pp. 55–78 (Composing Objects — instance confinement, delegating thread safety) · Rahman (2025) Ch.5 pp. 217–230 · [JLS — final Variables](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.12.4) · [JLS — final Field Semantics](https://docs.oracle.com/javase/specs/jls/se21/html/jls-17.html#jls-17.5) · [JEP 395 — Records](https://openjdk.org/jeps/395) · [JEP 481 — Scoped Values](https://openjdk.org/jeps/481)
 
 ### Python: Mutable by Default, Immutability Through Type Choice
 
@@ -477,7 +477,7 @@ ready = true;                        System.out.println(number);
 
 Without `volatile` or `synchronized`, thread B may never see `ready = true` or may see `ready = true` but `number` still as 0 due to reordering.
 
-> **Sources:** Horstmann (2024) Ch.4 pp. 55–67 · Bloch (2018) Item 50 pp. 231–235, Item 78 pp. 311–316 · Goetz et al. (2006) Ch.3 pp. 33–45 · Valeev (2024) Ch.8 pp. 213–230 · [JLS — Assignment Expressions](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.26)
+> **Sources:** Horstmann (2024) Ch.4 pp. 55–67 · Bloch (2018) Item 50 pp. 231–235, Item 78 pp. 311–316 · Goetz et al. (2006) Ch.3 pp. 33–45 · Valeev (2024) Ch.7 pp. 177–212 (equals/hashCode contract for mutable vs immutable objects, identity pitfalls), Ch.8 pp. 213–230 · [JLS — Assignment Expressions](https://docs.oracle.com/javase/specs/jls/se21/html/jls-15.html#jls-15.26)
 
 ### Python: Shared References Everywhere
 
