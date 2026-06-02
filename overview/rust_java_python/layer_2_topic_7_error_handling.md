@@ -126,7 +126,7 @@ BaseException
 
 Python has **no checked exceptions** — all exceptions are unchecked. There is no `throws` equivalent. The canonical example of exceptions as control flow: `StopIteration` signals the end of iteration in every `for` loop. Every `for x in collection:` internally catches `StopIteration` — exceptions are the mechanism, not the anomaly.
 
-> **Sources:** Martelli et al (2023) Ch.6 pp. 195–200 · [Python docs — Errors and Exceptions](https://docs.python.org/3/tutorial/errors.html) · [Python docs — Built-in Exceptions](https://docs.python.org/3/library/exceptions.html) · [Python Glossary — EAFP](https://docs.python.org/3/glossary.html#term-EAFP) · [Python Glossary — LBYL](https://docs.python.org/3/glossary.html#term-LBYL)
+> **Sources:** Martelli et al (2023) Ch.6 pp. 195–200 · Beazley (2021) §3.4 pp. 64–68 (the exception hierarchy from `BaseException` down, exceptions and control flow) · [Python docs — Errors and Exceptions](https://docs.python.org/3/tutorial/errors.html) · [Python docs — Built-in Exceptions](https://docs.python.org/3/library/exceptions.html) · [Python Glossary — EAFP](https://docs.python.org/3/glossary.html#term-EAFP) · [Python Glossary — LBYL](https://docs.python.org/3/glossary.html#term-LBYL)
 
 ### Comparison Matrix
 
@@ -721,7 +721,7 @@ raise RuntimeError("clean message") from None
 | `__traceback__` | Interpreter | Traceback object for this exception |
 | `__suppress_context__` | `raise X from None` | If True, hides `__context__` in display |
 
-> **Sources:** Martelli et al (2023) Ch.6 pp. 206–210 · [Python docs — The raise statement](https://docs.python.org/3/reference/simple_stmts.html#the-raise-statement) · [PEP 3134 — Exception Chaining](https://peps.python.org/pep-3134/)
+> **Sources:** Martelli et al (2023) Ch.6 pp. 206–210 · Beazley (2021) §3.4.4 pp. 70–72 (`__cause__` vs `__context__`, suppressing chaining with `from None`, traceback survival) · [Python docs — The raise statement](https://docs.python.org/3/reference/simple_stmts.html#the-raise-statement) · [PEP 3134 — Exception Chaining](https://peps.python.org/pep-3134/)
 
 ### Comparison Matrix
 
@@ -1115,7 +1115,7 @@ except ConfigError as e:
         print(f"  Caused by: {e.__cause__}")
 ```
 
-> **Sources:** Martelli et al (2023) Ch.6 pp. 215–219 · [Python docs — User-defined Exceptions](https://docs.python.org/3/tutorial/errors.html#user-defined-exceptions) · [Python docs — Exception hierarchy](https://docs.python.org/3/library/exceptions.html#exception-hierarchy) · [PEP 3134 — Exception Chaining](https://peps.python.org/pep-3134/)
+> **Sources:** Martelli et al (2023) Ch.6 pp. 215–219 · Beazley (2021) §3.4.3 pp. 69–70 (defining new exceptions — minimal base classes, package-scoped hierarchies, when adding attributes beats subclassing) · [Python docs — User-defined Exceptions](https://docs.python.org/3/tutorial/errors.html#user-defined-exceptions) · [Python docs — Exception hierarchy](https://docs.python.org/3/library/exceptions.html#exception-hierarchy) · [PEP 3134 — Exception Chaining](https://peps.python.org/pep-3134/)
 
 ### Comparison Matrix
 
@@ -1347,7 +1347,9 @@ type_errors, rest = eg.split(TypeError)
 
 The `exceptiongroup` backport package provides these features for Python 3.7+.
 
-> **Sources:** Martelli et al (2023) Ch.6 pp. 215–219 · [PEP 654 — Exception Groups and except*](https://peps.python.org/pep-0654/) · [Python docs — ExceptionGroup](https://docs.python.org/3/library/exceptions.html#ExceptionGroup)
+**Pre-`TaskGroup` baseline.** Hattingh's *Using Asyncio in Python* (Ch.3) documents the patterns `TaskGroup` + `ExceptionGroup` displaced: `asyncio.gather(*coros, return_exceptions=True)` returns a *flat* list mixing successful results and `Exception` instances, leaving the caller to demux manually with no nesting and no shape preservation; `CancelledError` is itself caught when `return_exceptions=True`, masking cancellation; and graceful shutdown required hand-rolled finalization with `asyncio.shield()` and explicit `try/finally`. `TaskGroup` (PEP 654 / 3.11+) replaces this by guaranteeing structured cancellation on first failure and re-raising siblings as a single `ExceptionGroup`, which `except*` then handles by type.
+
+> **Sources:** Martelli et al (2023) Ch.6 pp. 215–219 · Hattingh (2020) Ch.3 pp. 21–73 (pre-`TaskGroup` baseline — `asyncio.gather(return_exceptions=True)`, `CancelledError` propagation, graceful-shutdown patterns) · [PEP 654 — Exception Groups and except*](https://peps.python.org/pep-0654/) · [Python docs — ExceptionGroup](https://docs.python.org/3/library/exceptions.html#ExceptionGroup)
 
 ### Java: Structured Concurrency (JEP 453)
 
@@ -1402,7 +1404,9 @@ CompletableFuture.supplyAsync(() -> fetchData())
     });
 ```
 
-> **Sources:** Evans et al (2022) Ch.5 pp. 119–166 · [JEP 453 — Structured Concurrency](https://openjdk.org/jeps/453)
+**The interruption-rule baseline** (Goetz Ch.7 §7.1.2–§7.1.3) underpins all of the above. Cooperative cancellation in Java is signalled by `InterruptedException` or the per-thread interrupt status flag, and the canonical rule is: **never swallow `InterruptedException` silently** — either propagate it or restore the interrupt status with `Thread.currentThread().interrupt()` before continuing. Tasks that escape this rule become unkillable, defeating both `ExecutorService.shutdownNow()` and `StructuredTaskScope` cancellation. For fire-and-forget threads whose exceptions would otherwise vanish into the pool, Goetz §7.3 prescribes installing a `Thread.UncaughtExceptionHandler` (per-thread or per-ThreadGroup); on an `ExecutorService` this is set via the `ThreadFactory` used to construct worker threads.
+
+> **Sources:** Evans et al (2022) Ch.5 pp. 119–166, Ch.6 pp. 169–205 (§6.8 `Future.get()` / `ExecutionException`, §6.9 `Executors`) · Goetz et al (2006) Ch.5 pp. 79–110 (exception handling in synchronized collections, blocking-queue interruption semantics), Ch.6 pp. 113–134 (Task Execution — `Future.get()` wrapping in `ExecutionException`, `CompletionService`), Ch.7 pp. 135–166 (§7.1.2–§7.1.3 interruption policies and responses, §7.3 `UncaughtExceptionHandler`) · [JEP 453 — Structured Concurrency](https://openjdk.org/jeps/453)
 
 ### Rust: Error Handling in Async Tasks
 
@@ -1541,10 +1545,13 @@ Rust does not have a built-in ExceptionGroup. You collect errors manually into a
 | McNamara (2021) — *Rust in Action* | Ch.3 pp. 77–105, Ch.8 pp. 251–291 | `books/Rust/McNamara 2021 Rust in action.pdf` |
 | Bloch (2018) — *Effective Java* | Ch.10 pp. 293–309 (Items 69–77) | `books/Java/Bloch 2018 Effective Java.pdf` |
 | Horstmann (2024) — *Core Java, Vol. I* | Ch.7 pp. 94–102 | `books/Java/Horstmann 2024 Core Java vol I.pdf` |
-| Evans et al (2022) — *The Well-Grounded Java Developer* | Ch.5 pp. 119–166 | `books/Java/Evans 2022 The well-grounded Java developer.pdf` |
+| Evans et al (2022) — *The Well-Grounded Java Developer* | Ch.5 pp. 119–166, Ch.6 pp. 169–205 | `books/Java/Evans 2022 The well-grounded Java developer.pdf` |
+| Goetz et al (2006) — *Java Concurrency in Practice* | Ch.5 pp. 79–110, Ch.6 pp. 113–134, Ch.7 pp. 135–166 | `books/Java/Goetz 2006 Java concurrency in practice.pdf` |
 | Valeev (2024) — *100 Java Mistakes* | Ch.5 pp. 124–154 | `books/Java/Valeev 2024 100 Java mistakes.pdf` |
 | Martelli et al (2023) — *Python in a Nutshell* | Ch.6 pp. 195–219 | `books/Python/Martelli 2023 Python in a nutshell.pdf` |
+| Beazley (2021) — *Python Distilled* | Ch.3 §3.4 pp. 64–74 | `books/Python/Beazley 2021 Python distilled.pdf` |
 | Ramalho (2022) — *Fluent Python* | Ch.18 pp. 657–694 | `books/Python/Ramalho 2022 Fluent Python.pdf` |
+| Hattingh (2020) — *Using Asyncio in Python* | Ch.3 pp. 21–73 | `books/Python/Hattingh 2020 Using asyncio in Python.pdf` |
 | Viafore (2021) — *Robust Python* | Ch.14 pp. 199–210, Ch.20 pp. 285–296 | `books/Python/Viafore 2021 Robust Python.pdf` |
 
 ### External Resources

@@ -158,7 +158,7 @@ Key design principles:
 - **Everything is an object.** Classes, functions, modules, and even types are objects with `__dict__`. You can add attributes to an instance at any time: `point.color = "red"` works even if `color` was never declared.
 - **Dynamic by default.** Methods can be added, removed, or replaced on classes and instances at runtime. This is what makes monkey-patching possible.
 
-> **Sources:** Ramalho (2022) Ch.1 pp. 3–20 · Martelli et al (2023) Ch.4 pp. 115–135 · Viafore (2021) Ch.10 pp. 135–145 · [Python docs — Data Model](https://docs.python.org/3/reference/datamodel.html) · [Python docs — `__slots__`](https://docs.python.org/3/reference/datamodel.html#slots)
+> **Sources:** Ramalho (2022) Ch.1 pp. 3–20 · Martelli et al (2023) Ch.4 pp. 115–135 · Beazley (2021) Ch.7 §7.1–7.5 pp. 153–223 (class definition, instances, attribute access, scoping rules — `__init__` vs `__new__`, `type` as the default metaclass) · Viafore (2021) Ch.10 pp. 135–145 · [Python docs — Data Model](https://docs.python.org/3/reference/datamodel.html) · [Python docs — `__slots__`](https://docs.python.org/3/reference/datamodel.html#slots)
 
 ### Comparison Matrix
 
@@ -595,7 +595,7 @@ D()
 - Does not maintain its own state (or minimally)
 - Names itself with the `Mixin` suffix by convention
 
-> **Sources:** Ramalho (2022) Ch.14 pp. 487–518 · Viafore (2021) Ch.12 pp. 171–185 · Slatkin (2025) Ch.7 pp. 235–244 (Items 53–54) · [Python docs — Multiple Inheritance](https://docs.python.org/3/tutorial/classes.html#multiple-inheritance) · [PEP 3135 — New Super](https://peps.python.org/pep-3135/) · [Michele Simionato — "The Python 2.3 MRO"](https://www.python.org/download/releases/2.3/mro/)
+> **Sources:** Ramalho (2022) Ch.14 pp. 487–518 · Beazley (2021) Ch.7 §7.7 (Inheritance), §7.19 (Multiple Inheritance, Interfaces, and Mixins) pp. 153–223 · Viafore (2021) Ch.12 pp. 171–185 · Slatkin (2025) Ch.7 pp. 235–244 (Items 53–54) · [Python docs — Multiple Inheritance](https://docs.python.org/3/tutorial/classes.html#multiple-inheritance) · [PEP 3135 — New Super](https://peps.python.org/pep-3135/) · [Michele Simionato — "The Python 2.3 MRO"](https://www.python.org/download/releases/2.3/mro/)
 
 ### Comparison Matrix
 
@@ -772,7 +772,7 @@ public abstract class AbstractCollection<E> implements Collection<E> {
 }
 ```
 
-> **Sources:** Horstmann (2024) Ch.5 pp. 74–82 · Horstmann (2024) Ch.6 pp. 85–92 · Bloch (2018) Ch.4 pp. 100–115 · Evans et al (2022) Ch.3 pp. 60–77 · [JLS Ch.9 — Interfaces](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html)
+> **Sources:** Horstmann (2024) Ch.5 pp. 74–82 · Horstmann (2024) Ch.6 pp. 85–92 · Bloch (2018) Ch.4 pp. 100–115 · Evans et al (2022) Ch.3 pp. 60–77 · Naftalin & Wadler (2024) Ch.1 pp. 26–36 (subtyping and wildcards — Substitution Principle, PECS), Ch.2 pp. 38–48 (`Comparable`/`Comparator`, bounded type parameters, bridge methods) · [JLS Ch.9 — Interfaces](https://docs.oracle.com/javase/specs/jls/se21/html/jls-9.html)
 
 ### Python: Duck Typing, ABCs, and `typing.Protocol`
 
@@ -1061,7 +1061,7 @@ class Point:
 
 Despite these optimizations, Python's dispatch remains fundamentally slower than vtable-based dispatch — but it offers unmatched flexibility: methods can be added, replaced, or deleted at runtime on any class or instance.
 
-> **Sources:** Martelli et al (2023) Ch.4 pp. 145–169 · [Python docs — Customizing attribute access](https://docs.python.org/3/reference/datamodel.html#customizing-attribute-access) · [Python docs — Descriptor HowTo Guide](https://docs.python.org/3/howto/descriptor.html)
+> **Sources:** Martelli et al (2023) Ch.4 pp. 145–169 · Ramalho (2022) Ch.22 pp. 835–878 (Dynamic Attributes and Properties — `__getattr__`/`__setattr__` interposing on the lookup chain, properties as descriptor-based abstractions), Ch.23 pp. 879–906 (Attribute Descriptors — data vs non-data descriptors, `__get__`/`__set__`/`__delete__`/`__set_name__`) · Beazley (2021) Ch.7 §7.4 (Attribute Access), §7.25 (Internal Object Representation and Attribute Binding), §7.28 (Descriptors) pp. 153–223 · Beazley & Jones (2013) Cookbook §8.9 (a new kind of class or instance attribute), §8.10 (lazily computed properties) pp. 243–328 · [Python docs — Customizing attribute access](https://docs.python.org/3/reference/datamodel.html#customizing-attribute-access) · [Python docs — Descriptor HowTo Guide](https://docs.python.org/3/howto/descriptor.html)
 
 ### Comparison Matrix
 
@@ -1274,7 +1274,7 @@ p = Person(name="Alice", age=30)
 # Aged.__init__ calls Base.__init__()
 ```
 
-> **Sources:** Ramalho (2022) Ch.14 pp. 497–518 · Slatkin (2025) Ch.7 pp. 235–239 (Item 53) · [Michele Simionato — "The Python 2.3 MRO"](https://www.python.org/download/releases/2.3/mro/) · [Python docs — Method Resolution Order](https://docs.python.org/3/glossary.html#term-method-resolution-order) · [Python docs — super()](https://docs.python.org/3/library/functions.html#super)
+> **Sources:** Ramalho (2022) Ch.14 pp. 497–518 · Beazley (2021) Ch.7 §7.7 (Inheritance), §7.19 (Multiple Inheritance, Interfaces, and Mixins) pp. 153–223 (single linear MRO per class, the constraints C3 enforces, failure cases) · Slatkin (2025) Ch.7 pp. 235–239 (Item 53) · [Michele Simionato — "The Python 2.3 MRO"](https://www.python.org/download/releases/2.3/mro/) · [Python docs — Method Resolution Order](https://docs.python.org/3/glossary.html#term-method-resolution-order) · [Python docs — super()](https://docs.python.org/3/library/functions.html#super)
 
 ### Comparison Matrix
 
@@ -2268,7 +2268,7 @@ Seconds = NewType("Seconds", float)
 # At runtime: Meters(5.0) is just 5.0
 ```
 
-> **Sources:** Naftalin & Wadler (2024) Ch.6 pp. 81–90 · Slatkin (2025) Ch.7 pp. 260–264 (Item 57) · Slatkin (2025) Ch.8 pp. 285–298 (Items 62–63) · [Rust Design Patterns book](https://rust-unofficial.github.io/patterns/) · [Refactoring Guru — Design Patterns](https://refactoring.guru/design-patterns)
+> **Sources:** Slatkin (2025) Ch.7 pp. 260–264 (Item 57) · Slatkin (2025) Ch.8 pp. 285–298 (Items 62–63) · Ramalho (2022) Ch.24 pp. 907–956 (Class Metaprogramming — `__init_subclass__` for declarative subclass customization, class decorators, metaclasses) · Beazley & Jones (2013) Cookbook Ch.9 §9.19 (initializing class members at definition time — pre-PEP 487 baseline `__init_subclass__` supersedes), §9.20 (multiple dispatch with annotations) pp. 329–395 · [Rust Design Patterns book](https://rust-unofficial.github.io/patterns/) · [Refactoring Guru — Design Patterns](https://refactoring.guru/design-patterns)
 
 ### Meta-Pattern: How Each Language Reshapes OOP Design
 
