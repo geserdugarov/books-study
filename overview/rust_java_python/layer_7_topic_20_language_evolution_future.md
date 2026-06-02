@@ -24,6 +24,8 @@ The **edition system** (covered in depth in Section 2) enables backwards-incompa
 
 The **crater** tool is unique to Rust: before stabilizing a feature, the Rust team runs crater to compile every crate on crates.io with the change, detecting potential breakage across the entire ecosystem. This ecosystem-wide regression testing is the foundation of Rust's "stability without stagnation" promise.
 
+> **Sources:** Klabnik & Nichols (2023) Appendix E pp. 515–516 · Matthews (2024) Ch.3 pp. 43–62 · [Rust Governance](https://www.rust-lang.org/governance) · [RFC 3392 — Leadership Council](https://rust-lang.github.io/rfcs/3392-leadership-council.html) · [Rust RFCs repository](https://github.com/rust-lang/rfcs) · [Rust Forge — Release Process](https://forge.rust-lang.org/release/process.html) · [Crater](https://github.com/rust-lang/crater)
+
 ### Java: Six-Month Cadence and the JEP Process
 
 Java's evolution is governed by a layered process. The **Java Community Process (JCP)** produces Java Specification Requests (JSRs) for major platform changes, while the **JDK Enhancement Proposal (JEP)** process handles individual features within the OpenJDK.
@@ -50,6 +52,8 @@ JEPs typically come from Oracle/OpenJDK engineers and represent significant engi
 
 Oracle stewards the OpenJDK specification, but the ecosystem includes **multiple vendors** providing their own builds with different support timelines: Amazon Corretto, Eclipse Temurin, Azul Zulu, Red Hat. This means Java's evolution is both centralized (Oracle drives the specification) and decentralized (multiple vendors compete on support and features).
 
+> **Sources:** Evans et al (2022) Ch.1 pp. 3–25 · Evans & Gough (2024) Ch.3 p. 73 · [OpenJDK JEP process](https://openjdk.org/jeps/0) · [JEP 1 — JEP Process](https://openjdk.org/jeps/1) · [JEP 12 — Preview Features](https://openjdk.org/jeps/12) · [Oracle Java SE Support Roadmap](https://www.oracle.com/java/technologies/java-se-support-roadmap.html) · [JDK 25 release page](https://openjdk.org/projects/jdk/25/)
+
 ### Python: Annual Releases and PEP Governance
 
 Python's governance underwent a dramatic transformation in 2018 when Guido van Rossum retired as **BDFL (Benevolent Dictator For Life)** after the contentious PEP 572 (walrus operator) debate. **PEP 13** established the **Steering Council**: five elected members who make final decisions on PEPs, with elections held at each major release. BDFL-delegates can be appointed for specific PEPs (domain experts who make the accept/reject decision for their area).
@@ -70,6 +74,8 @@ Each version receives security fixes for 5 years. The Python Software Foundation
 
 Python's evolution is profoundly shaped by the **Python 2→3 trauma**. The transition (announced 2006, Python 2 EOL in 2020) was a 14-year migration that split the ecosystem and eroded trust in backwards compatibility. The lesson: never again make a breaking change that requires the entire ecosystem to migrate simultaneously. Every Python evolution since has been designed for gradual adoption.
 
+> **Sources:** Martelli et al (2023) Ch.1 pp. 1–19 · Slatkin (2025) Item 1 p. 1 · Slatkin (2025) Item 2 pp. 3–5 · [PEP 0 — Index of PEPs](https://peps.python.org/pep-0000/) · [PEP 13 — Python Language Governance](https://peps.python.org/pep-0013/) · [PEP 602 — Annual Release Cycle](https://peps.python.org/pep-0602/) · [Python Developer's Guide — Development Cycle](https://devguide.python.org/versions/) · [Python Steering Council](https://github.com/python/steering-council)
+
 ### Cross-Language Governance Comparison
 
 | Dimension | Rust | Java | Python |
@@ -82,6 +88,8 @@ Python's evolution is profoundly shaped by the **Python 2→3 trauma**. The tran
 | **Governance model** | Decentralized meritocracy | Corporate stewardship with open process | Elected representative democracy |
 
 The governance model directly shapes each language's evolution velocity. Rust evolves fastest at the syntax/library level (six-week releases) but gates major changes behind editions. Java evolves fastest at the JVM/platform level (six-month releases bring platform improvements that benefit all Java versions). Python evolves most cautiously but is currently undergoing its most ambitious transformation period (free-threaded mode + JIT compiler simultaneously).
+
+> **Sources:** Klabnik & Nichols (2023) Appendix E pp. 515–516 · Matthews (2024) Ch.3 pp. 43–62 · Evans et al (2022) Ch.1 pp. 3–25 · Martelli et al (2023) Ch.1 pp. 1–19 · [Adoptium support timeline](https://adoptium.net/support/) · [PEP 387 — Backwards Compatibility Policy](https://peps.python.org/pep-0387/)
 
 ---
 
@@ -118,6 +126,8 @@ cargo fix --edition
 
 Compare with Java: Java has no equivalent mechanism — breaking changes require deprecation cycles spanning multiple LTS versions, and some deprecated features persist for decades. Compare with Python: Python 2→3 was a one-time breaking change with no interoperability between versions, requiring the entire ecosystem to migrate simultaneously — the exact failure mode that Rust's editions prevent.
 
+> **Sources:** Klabnik & Nichols (2023) Appendix E pp. 515–516 · [The Rust Edition Guide](https://doc.rust-lang.org/edition-guide/) · [Rust Reference — Editions](https://doc.rust-lang.org/reference/editions.html) · [cargo fix documentation](https://doc.rust-lang.org/cargo/commands/cargo-fix.html)
+
 ### Edition 2018: The Async Revolution
 
 Edition 2018 was the most transformative, introducing:
@@ -143,6 +153,8 @@ async fn fetch_data(url: &str) -> Result<String, Error> {
 }
 ```
 
+> **Sources:** Klabnik & Nichols (2023) Appendix E pp. 515–516 · Gjengset (2022) Ch.5 pp. 67–84 · [Rust Edition Guide — 2018 Edition](https://doc.rust-lang.org/edition-guide/rust-2018/index.html)
+
 ### Edition 2021: Ergonomic Refinements
 
 Edition 2021 introduced:
@@ -167,6 +179,8 @@ let config = Config { name: "app".into(), debug: true };
 let check = || println!("{}", config.debug);  // captures only config.debug
 drop(config.name);  // OK: config.name is not captured
 ```
+
+> **Sources:** Klabnik & Nichols (2023) Appendix E pp. 515–516 · Gjengset (2022) Ch.5 pp. 67–84 · [Rust Edition Guide — 2021 Edition](https://doc.rust-lang.org/edition-guide/rust-2021/index.html)
 
 ### Edition 2024: The Latest Evolution
 
@@ -208,6 +222,8 @@ fn process_explicit<'a>(data: &'a str) -> impl Display + use<> {
 
 **5. Never type (`!`) fallback behavior changes.**
 
+> **Sources:** Klabnik & Nichols (2023) Appendix A pp. 495–497 (reserved keywords) · Klabnik & Nichols (2023) Appendix D pp. 511–514 (rustfix) · [Rust Edition Guide — 2024 Edition](https://doc.rust-lang.org/edition-guide/rust-2024/) · [Rust Blog — Rust 1.85.0 (2024 edition)](https://blog.rust-lang.org/2025/02/20/Rust-1.85.0.html)
+
 ### The Feature Pipeline: Nightly to Stable
 
 A feature's journey through the Rust release pipeline:
@@ -236,6 +252,8 @@ name = "my-lib"
 edition = "2021"
 rust-version = "1.70"  # MSRV declaration
 ```
+
+> **Sources:** Matthews (2024) Ch.2 pp. 11–42 · Matthews (2024) Ch.3 pp. 43–62 · Gjengset (2022) Ch.5 pp. 67–84 (MSRV policy) · [Rust Unstable Book](https://github.com/rust-lang/rust/blob/master/src/doc/unstable-book/src/SUMMARY.md) · [Crater](https://github.com/rust-lang/crater)
 
 ---
 
@@ -267,6 +285,8 @@ The six-month cadence has delivered pattern matching (Amber), virtual threads (L
 
 The JVM has evolved independently of the language: JIT compilation strategies, GC algorithms (G1, ZGC, Shenandoah), and runtime optimizations have improved steadily even between major language changes. This **dual evolution** (language + platform) is unique to Java — Rust and Python evolve the language and implementation together.
 
+> **Sources:** Horstmann (2024) *Core Java I* Ch.1 §1.4 · Beckwith (2024) Ch.1 pp. 1–42 · Rahman (2025) Ch.1 pp. 1–30 · [Java Almanac](https://javaalmanac.io/) · [Baeldung — New features per Java version](https://www.baeldung.com/java-versions-features)
+
 ### The Preview Feature Mechanism
 
 Java's preview feature mechanism (JEP 12) is the language's answer to Rust's feature gates:
@@ -287,6 +307,8 @@ A preview feature is fully specified and implemented but not yet permanent. Patt
 | String templates | Java 21–22 | Withdrawn | — |
 
 **Incubating features** (JEP 11) are different: they apply to APIs in the `jdk.incubator` namespace, signaling that the API shape may change significantly. The Vector API has been incubating since Java 16 through Java 23+.
+
+> **Sources:** Evans et al (2022) Ch.3 pp. 55–77 · [JEP 12 — Preview Features](https://openjdk.org/jeps/12) · [Inside Java](https://inside.java/) · [JDK 25 release page](https://openjdk.org/projects/jdk/25/) · [JEP 465 — String Templates (3rd preview, withdrawn 2024)](https://openjdk.org/jeps/465)
 
 ### LTS Strategy and Version Selection
 
@@ -310,6 +332,8 @@ The **multi-vendor ecosystem** is critical: Oracle's commercial license changed 
 Practical advice: prefer the latest LTS, adopt non-LTS only for greenfield projects where preview features provide significant value.
 
 Compare with Rust: no LTS concept — all users are expected to stay on or near the latest stable. Compare with Python: all minor versions receive security fixes for 5 years, similar to Java's LTS model but applied to every release.
+
+> **Sources:** Evans et al (2022) Ch.18 pp. 609–638 (Selecting your Java version) · [Oracle Java SE Support Roadmap](https://www.oracle.com/java/technologies/java-se-support-roadmap.html) · [Adoptium (Eclipse Temurin) support timeline](https://adoptium.net/support/)
 
 ### JPMS as a Case Study in Language Evolution
 
@@ -347,6 +371,8 @@ Seven years after JPMS's introduction, adoption remains mixed: most libraries ha
 
 JPMS influenced Java's subsequent approach: Loom's virtual threads are designed as drop-in replacements, Panama's FFI replaces JNI without breaking existing code, and Valhalla's value classes are designed to be backwards-compatible. Each subsequent project learned from JPMS's migration difficulty.
 
+> **Sources:** Horstmann (2024) *Core Java I* Ch.12 §§12.1–12.10 · Beckwith (2024) Ch.3 pp. 69–97 · [JEP 261 — Module System](https://openjdk.org/jeps/261)
+
 ---
 
 ## 4. Python's PEPs & Typing Evolution
@@ -371,6 +397,8 @@ tox -e py311,py312,py313
 # Lint with pyupgrade rules via ruff (Rust-based, fast)
 ruff check --select UP my_module.py
 ```
+
+> **Sources:** Martelli et al (2023) Ch.1 pp. 1–19 · Martelli et al (2023) Ch.26 pp. 661–668 · Martelli et al (2023) Appendix pp. 669–685 · [PEP 0 — Index of PEPs](https://peps.python.org/pep-0000/) · [Python Developer's Guide — Versions](https://devguide.python.org/versions/) · [pyupgrade](https://github.com/asottile/pyupgrade)
 
 ### The Typing Evolution: From PEP 484 to PEP 695
 
@@ -440,6 +468,8 @@ Production-quality type checkers compete and drive the ecosystem:
 | **pyright** | Microsoft | Fastest, used in VS Code/Pylance, strictest |
 | **pytype** | Google | Type inference without annotations |
 
+> **Sources:** Martelli et al (2023) Ch.5 pp. 171–194 · Ramalho (2022) Ch.8 pp. 253–302 · Ramalho (2022) Ch.15 pp. 519–560 · Viafore (2021) Part I pp. 19–106 · [PEP 484 — Type Hints](https://peps.python.org/pep-0484/) · [PEP 544 — Protocols: Structural subtyping](https://peps.python.org/pep-0544/) · [PEP 695 — Type Parameter Syntax](https://peps.python.org/pep-0695/) · [PEP 696 — Type Defaults](https://peps.python.org/pep-0696/) · [mypy documentation](https://mypy.readthedocs.io/en/stable/) · [Python typing module](https://docs.python.org/3/library/typing.html)
+
 ### CPython's Internal Evolution: `__future__` Imports
 
 CPython has an internal mechanism for evolving language semantics: `__future__` imports. When a new feature changes existing behavior, it is first made available as a future import:
@@ -456,6 +486,8 @@ from __future__ import unicode_literals  # string literals are unicode
 The compiler checks for `__future__` imports early in the compilation pipeline and adjusts behavior accordingly. This is Python's closest analog to Rust's feature gates, but operates at the file level (not crate level).
 
 Note: PEP 563 (`from __future__ import annotations`) was originally planned to become the default, but **PEP 649** (deferred evaluation of annotations, Python 3.14) provides an alternative approach that preserves runtime access to annotation objects while still deferring evaluation.
+
+> **Sources:** Shaw (2021) Ch.8 pp. 118–150 · [PEP 563 — Postponed Evaluation of Annotations](https://peps.python.org/pep-0563/) · [PEP 649 — Deferred Evaluation of Annotations](https://peps.python.org/pep-0649/) · [`__future__` module docs](https://docs.python.org/3/library/__future__.html)
 
 ### Deprecation and Migration in Python
 
@@ -494,6 +526,8 @@ def process(x: str | int | None, items: list[str]) -> None: ...
 ```
 
 Compare with Rust: `#[deprecated(since = "1.0.0", note = "use bar instead")]` emits compiler warnings, and cargo's dependency resolver constrains migration scope. Compare with Java: `@Deprecated(since = "9", forRemoval = true)` is more formal, and jdeprscan automates detection.
+
+> **Sources:** Slatkin (2025) Item 123 pp. 605–612 · Slatkin (2025) Item 124 pp. 613–620 · [PEP 387 — Backwards Compatibility Policy](https://peps.python.org/pep-0387/) · [PEP 702 — Marking deprecations using the type system](https://peps.python.org/pep-0702/) · [Python warnings module](https://docs.python.org/3/library/warnings.html) · [pyupgrade](https://github.com/asottile/pyupgrade)
 
 ---
 
@@ -564,6 +598,8 @@ The stabilization path demonstrates Rust's approach — correctness first, even 
 
 Current limitation: async trait methods are not yet fully compatible with `dyn Trait` (dynamic dispatch).
 
+> **Sources:** Gjengset (2022) Ch.13 pp. 223–243 · [Tracking issue — async traits](https://github.com/rust-lang/rust/issues/91611) · [RFC 1598 — Generic Associated Types](https://rust-lang.github.io/rfcs/1598-generic_associated_types.html) · [RFC 2394 — async/await](https://rust-lang.github.io/rfcs/2394-async_await.html)
+
 ### Polonius: Next-Generation Borrow Checker
 
 Polonius is the planned replacement for Rust's current borrow checker (NLL). The current checker sometimes rejects valid programs because it tracks borrows at the variable level rather than the access-path level:
@@ -592,6 +628,8 @@ fn get_or_insert(map: &mut HashMap<String, String>, key: &str) -> &str {
 Polonius uses a different algorithm (based on Datalog queries over program facts) that tracks borrows more precisely, accepting more valid programs while maintaining all safety guarantees. It has been in development since 2018 and is available on nightly behind a feature flag.
 
 This demonstrates a key difference from Java and Python: Rust's evolution is constrained by the need to maintain formal safety guarantees, making changes to core language semantics orders of magnitude more difficult to validate.
+
+> **Sources:** [Polonius (next-generation borrow checker)](https://github.com/rust-lang/polonius) · [Rust Blog — Polonius update](https://blog.rust-lang.org/inside-rust/2023/10/06/polonius-update.html)
 
 ### Gen Blocks: Generators and Coroutines
 
@@ -632,6 +670,8 @@ Future directions include **async generators** (`async gen { yield value; }`) fo
 
 Compare with Python: Python's generator syntax (`yield`) has been stable since Python 2.2 (2001) — Rust is adding a similar capability 25 years later, but with full type safety and zero-cost abstraction (no heap allocation, the state machine is sized at compile time). Compare with Java: Java has no generator/coroutine syntax.
 
+> **Sources:** Klabnik & Nichols (2023) Appendix A pp. 495–497 (reserved keywords) · [RFC 3513 — gen blocks](https://rust-lang.github.io/rfcs/3513-gen-blocks.html) · [Rust Unstable Book](https://github.com/rust-lang/rust/blob/master/src/doc/unstable-book/src/SUMMARY.md)
+
 ### The Broader Rust Roadmap
 
 Beyond specific features, Rust's near-term evolution includes:
@@ -646,6 +686,8 @@ Beyond specific features, Rust's near-term evolution includes:
 The Rust Foundation (established 2021) provides organizational infrastructure and funding but does not control language direction — technical decisions remain with the volunteer teams.
 
 Key takeaway: Rust's evolution is fast at the tooling/library level (six-week releases) and deliberate at the language level (features take years from RFC to stabilization).
+
+> **Sources:** Gjengset (2022) Ch.13 pp. 223–243 · [Rust project goals — Inside Rust blog](https://blog.rust-lang.org/inside-rust/) · [Ferrocene — formal Rust specification](https://ferrous-systems.com/ferrocene/) · [Rust Foundation](https://foundation.rust-lang.org/)
 
 ---
 
@@ -692,6 +734,8 @@ Recently delivered and upcoming Amber features include unnamed patterns and vari
 Amber's impact is cumulative: Java 21 code looks significantly different from Java 8 code. Records + sealed classes enable **algebraic data types**, and pattern matching enables a more functional style.
 
 Compare with Rust: Rust has had algebraic data types (enums with data) and pattern matching since 1.0. Compare with Python: Python 3.10 added structural pattern matching — Java and Python are converging on pattern matching from different directions.
+
+> **Sources:** Evans et al (2022) Ch.18 pp. 609–638 (Project Amber) · Evans et al (2022) Ch.3 pp. 55–77 · Beckwith (2024) Ch.2 pp. 43–68 · [Project Amber](https://openjdk.org/projects/amber/) · [JEP 456 — Unnamed Variables & Patterns](https://openjdk.org/jeps/456) · [JEP 507 — Primitive Types in Patterns, instanceof, switch](https://openjdk.org/jeps/507) · [JEP 513 — Flexible Constructor Bodies](https://openjdk.org/jeps/513) · [JEP 465 — String Templates (withdrawn)](https://openjdk.org/jeps/465)
 
 ### Project Loom: Virtual Threads and Structured Concurrency
 
@@ -764,6 +808,8 @@ synchronized blocks (Java 1) → java.util.concurrent (Java 5) →
 
 Compare with Rust: Rust uses async/await (compile-time state machines, zero overhead) — different philosophy from Loom's runtime-managed virtual threads, but both solve the "many concurrent tasks" problem.
 
+> **Sources:** Evans et al (2022) Ch.18 pp. 609–638 (Project Loom) · Rahman (2025) Ch.1 pp. 1–30 · Evans & Gough (2024) Ch.15 pp. 405–425 · [JEP 505 — Structured Concurrency (5th preview, JDK 25)](https://openjdk.org/jeps/505) · [JEP 506 — Scoped Values (finalized, JDK 25)](https://openjdk.org/jeps/506) · [Project Loom](https://openjdk.org/projects/loom/)
+
 ### Project Panama: Foreign Function & Memory API
 
 Panama (FFI finalized in Java 22) replaces JNI with a pure-Java API for calling native functions:
@@ -814,6 +860,8 @@ float[] vectorAdd(float[] a, float[] b) {
 }
 ```
 
+> **Sources:** Evans et al (2022) Ch.18 pp. 609–638 (Project Panama) · Beckwith (2024) Ch.9 pp. 307–336 · [Project Panama](https://openjdk.org/projects/panama/) · [JEP 454 — Foreign Function & Memory API](https://openjdk.org/jeps/454)
+
 ### Project Valhalla: Value Classes (still future — not in JDK 25 GA)
 
 Valhalla aims to eliminate the object header overhead for small, immutable types. Currently, `Integer` (boxed) costs 16 bytes on 64-bit JVM vs `int` (primitive) at 4 bytes. JEP 401 ("Value Classes and Objects") is still a submitted/candidate JEP — JDK 25 GA did **not** include value classes; the code below illustrates the proposed syntax, not currently-shipping Java.
@@ -843,6 +891,8 @@ Complex[] numbers = new Complex[1000];  // flattened: no pointer indirection
 
 Value classes: no identity (no `==` reference comparison), no synchronization, flattened in arrays (no pointer indirection). **Specialized generics** (`List<int>` instead of `List<Integer>`) eliminate boxing entirely. Valhalla will fundamentally change Java's performance characteristics for data-intensive workloads.
 
+> **Sources:** Beckwith (2024) Ch.2 pp. 43–68 (type system evolution, Valhalla) · Evans et al (2022) Ch.18 pp. 609–638 (Project Valhalla) · Evans & Gough (2024) Ch.15 pp. 405–425 · [Project Valhalla](https://openjdk.org/projects/valhalla/) · [JEP 401 — Value Classes and Objects](https://openjdk.org/jeps/401)
+
 ### Project Leyden: Startup Optimization
 
 Leyden aims to close the startup and memory gap with Rust/GraalVM native images while retaining the JVM's dynamic capabilities:
@@ -866,6 +916,8 @@ jcmd <pid> JDK.checkpoint  # snapshot
 java -XX:CRaCRestoreFrom=checkpoint_dir
 ```
 
+> **Sources:** Beckwith (2024) Ch.8 pp. 273–306 (CDS, AOT, CRaC, Leyden) · Evans & Gough (2024) Ch.15 pp. 405–425 · [Project Leyden](https://openjdk.org/projects/leyden/) · [CRaC OpenJDK project](https://openjdk.org/projects/crac/)
+
 ### Java's Evolution Trajectory: Synthesis
 
 Java is simultaneously evolving in four directions:
@@ -878,6 +930,8 @@ Java is simultaneously evolving in four directions:
 Java's deprecation philosophy: `@Deprecated(since = "9", forRemoval = true)` marks methods for eventual removal, but Java almost never actually removes them. `Thread.stop()` was deprecated in Java 1.2 (1998) and still exists in Java 21.
 
 The overarching strategy is **additive evolution**: add new paradigms alongside existing ones (virtual threads coexist with platform threads, records coexist with regular classes), never removing what exists. This keeps backwards compatibility but increases language surface area over time.
+
+> **Sources:** Horstmann (2024) *Core Java I* Ch.11 §§11.1–11.3 (@Deprecated annotation) · [JEP 277 — Enhanced Deprecation](https://openjdk.org/jeps/277) · [JDK 25 release page](https://openjdk.org/projects/jdk/25/)
 
 ---
 
@@ -943,6 +997,8 @@ elapsed = time.time() - start
 
 Compare with Rust: Rust's ownership model makes data races a compile-time error — no runtime locking overhead needed. Compare with Java: the JVM has supported true multi-threading since version 1.0.
 
+> **Sources:** Shaw (2021) Ch.11 pp. 221–283 (GIL, threading, subinterpreters) · [PEP 703 — Making the GIL Optional](https://peps.python.org/pep-0703/) · [PEP 779 — Criteria for supported status for free-threaded Python](https://peps.python.org/pep-0779/) · [Python docs — Free-threaded CPython](https://docs.python.org/3/howto/free-threading-python.html)
+
 ### The CPython JIT Compiler (PEP 744)
 
 CPython has always been an interpreter, executing bytecode through a dispatch loop. **PEP 744** (experimental in Python 3.13+) introduces a **"copy-and-patch" JIT compiler**:
@@ -963,6 +1019,8 @@ This is simpler than traditional JIT compilers (HotSpot, V8, PyPy) and is the fi
 The Faster CPython project (led by Mark Shannon, funded by Microsoft) drives this multi-year roadmap.
 
 Compare with Java: HotSpot's JIT is vastly more sophisticated (tiered compilation, profile-guided optimization, escape analysis, inlining — decades of engineering). Compare with PyPy: PyPy's tracing JIT achieves 4–10x speedups but has limited C extension compatibility. CPython's strategy: incremental improvements that maintain full C extension compatibility.
+
+> **Sources:** Shaw (2021) Ch.9 pp. 151–175 (evaluation loop, `ceval.c`) · [PEP 744 — JIT Compilation](https://peps.python.org/pep-0744/) · [Faster CPython project](https://github.com/faster-cpython/ideas)
 
 ### Structural Pattern Matching and Recent Features
 
@@ -1022,6 +1080,8 @@ Other significant recent features:
 - Deferred evaluation of annotations (PEP 649, replacing PEP 563 approach)
 - Template strings / t-strings (PEP 750)
 
+> **Sources:** Martelli et al (2023) Ch.26 pp. 661–668 · Martelli et al (2023) Appendix pp. 669–685 · [PEP 634 — Structural Pattern Matching](https://peps.python.org/pep-0634/) · [PEP 702 — Marking deprecations](https://peps.python.org/pep-0702/) · [PEP 750 — Template Strings](https://peps.python.org/pep-0750/) · [Python 3.13 What's New](https://docs.python.org/3/whatsnew/3.13.html) · [Python 3.14 What's New](https://docs.python.org/3/whatsnew/3.14.html)
+
 ### Python's Identity Evolution
 
 Python is undergoing the most dramatic identity shift of the three languages:
@@ -1037,6 +1097,8 @@ Python is undergoing the most dramatic identity shift of the three languages:
 The key tension: every "advanced" feature risks making Python more complex for beginners. The Python community manages this through the **"optional complexity" philosophy**: typing is optional, pattern matching can be ignored, free-threading is an opt-in build.
 
 Compare with Rust: Rust was designed from the start with a complex type system — the complexity is the point. Compare with Java: Java has accumulated complexity over 30 years, managing it through backwards compatibility and incremental preview features. Python's unique challenge: remaining the best language for beginners while becoming powerful enough for production systems.
+
+> **Sources:** Slatkin (2025) Item 124 pp. 613–620 · Viafore (2021) Part I pp. 19–106 · [PEP 779 — Free-threaded Python](https://peps.python.org/pep-0779/) · [PEP 744 — JIT Compilation](https://peps.python.org/pep-0744/)
 
 ---
 
@@ -1099,6 +1161,8 @@ Python removes more readily than Java but on the PEP 387 horizon: minimum two mi
 | **Automation** | `cargo fix --edition` (~95% automatic) | pyupgrade (syntax modernization) | IDE migration assistants |
 | **Ecosystem testing** | Crater (all crates.io) | tox/nox (per-project) | Per-project CI |
 
+> **Sources:** Klabnik & Nichols (2023) Ch.14 pp. 295–313 · Horstmann (2024) *Core Java I* Ch.11 §§11.1–11.3 · Slatkin (2025) Item 123 pp. 605–612 · [Rust `#[deprecated]` attribute](https://doc.rust-lang.org/reference/attributes/diagnostics.html#the-deprecated-attribute) · [jdeprscan tool](https://docs.oracle.com/en/java/javase/21/docs/specs/man/jdeprscan.html) · [PEP 387 — Backwards Compatibility Policy](https://peps.python.org/pep-0387/) · [PEP 702 — `@warnings.deprecated`](https://peps.python.org/pep-0702/) · [cargo-semver-checks](https://github.com/obi1kenobi/cargo-semver-checks)
+
 ### Migration Tooling and Automation
 
 **Rust migration toolchain:**
@@ -1144,6 +1208,8 @@ nox -s tests                          # alternative to tox
 
 The trend: migration is becoming increasingly automated across all three languages, with tooling that can update millions of lines with minimal human intervention.
 
+> **Sources:** Klabnik & Nichols (2023) Appendix D pp. 511–514 (rustfix, Clippy) · Gjengset (2022) Ch.5 pp. 67–84 (versioning, MSRV, changelogs) · [cargo-semver-checks](https://github.com/obi1kenobi/cargo-semver-checks) · [Crater](https://github.com/rust-lang/crater) · [Java SE Migration Guide](https://docs.oracle.com/en/java/javase/21/migrate/) · [pyupgrade](https://github.com/asottile/pyupgrade) · [ruff](https://docs.astral.sh/ruff/)
+
 ### Cross-Language Evolution Patterns
 
 **1. The backwards-compatibility tax.** Every successful language accumulates features that cannot be removed. Java carries 30 years of backwards-compatible APIs; Rust manages this through editions; Python accepted the 2→3 trauma to reset but now avoids breaking changes. The cost: language surface area grows — Java 21 has records AND classes, virtual threads AND platform threads, pattern matching AND if/else chains.
@@ -1185,6 +1251,8 @@ This suggests these features address fundamental programming needs regardless of
 - Java's virtual threads may influence Python's concurrency evolution post-GIL
 - Python's typing evolution draws from TypeScript's experience
 - All three languages are watching WebAssembly as a potential universal compilation target
+
+> **Sources:** Gjengset (2022) Ch.13 pp. 223–243 (staying up to date with Rust) · Klabnik & Nichols (2023) Ch.14 pp. 295–313 · Slatkin (2025) Item 124 pp. 613–620 · [Rust project goals — Inside Rust blog](https://blog.rust-lang.org/inside-rust/) · [Ferrocene — formal Rust specification](https://ferrous-systems.com/ferrocene/) · [Faster CPython project](https://github.com/faster-cpython/ideas)
 
 ---
 
