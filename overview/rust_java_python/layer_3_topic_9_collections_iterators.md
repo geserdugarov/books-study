@@ -71,7 +71,7 @@ List<String> immutable = List.of("x", "y", "z");
 
 Java arrays are **covariant**: `String[]` is a subtype of `Object[]`. This enables runtime `ArrayStoreException` — a flaw that Bloch identifies as a reason to prefer lists over arrays (Item 28).
 
-**Java 21** introduced the `SequencedCollection` interface (JEP 431), unifying `getFirst()`, `getLast()`, and `reversed()` across all ordered collections — `List`, `Deque`, `SortedSet`, `LinkedHashSet`, etc.
+**Java 21** introduced the `SequencedCollection` interface (JEP 431), unifying `getFirst()`, `getLast()`, and `reversed()` across all ordered collections — `List`, `Deque`, `SortedSet`, `LinkedHashSet`, etc. Naftalin & Wadler's Ch.7 walks the `SequencedCollection` / `SequencedSet` / `NavigableSet` side of the new hierarchy and explains how `reversed()` is a *view*, not a copy: mutations through it write back into the original; the parallel `SequencedMap` / `NavigableMap` story is covered later in Ch.11 alongside the rest of the map family.
 
 ```java
 SequencedCollection<String> seq = new ArrayList<>(List.of("a", "b", "c"));
@@ -112,7 +112,7 @@ x, y = point                              # unpacking
 
 **`array.array`** stores typed values compactly (like C arrays), but is rarely used because NumPy is preferred for numerical work.
 
-**`collections.deque`** is a doubly-linked list of fixed-size blocks — O(1) append/pop at both ends, O(n) random access. It supports an optional `maxlen` for bounded buffers.
+**`collections.deque`** is a doubly-linked list of fixed-size blocks — O(1) append/pop at both ends, O(n) random access. It supports an optional `maxlen` for bounded buffers. The *Python Cookbook* Ch.1 (Beazley & Jones) supplies the practical recipe vocabulary — unpacking with `*rest`, fixed-history buffers via `deque(maxlen=N)`, top-N selection via `heapq.nlargest`/`nsmallest`, priority queues via `(priority, count, item)` tuples, `defaultdict` for one-to-many mappings, sorting custom objects by named attribute via `operator.attrgetter`, grouping consecutive records via `itertools.groupby`, dict subsetting via comprehensions, and combining several mappings via `ChainMap`.
 
 ```python
 from collections import deque
@@ -372,7 +372,7 @@ The enhanced `for` loop (`for (var x : collection)`) desugars to `iterator()` + 
 
 **`ListIterator<E>`** extends `Iterator` with bidirectional traversal (`hasPrevious()`, `previous()`), plus `add()` and `set()` for modification during iteration.
 
-Java iterators are **fail-fast**: modifying the collection during iteration (except through the iterator's own `remove()`) throws `ConcurrentModificationException`. This is detected via an internal modification counter — a runtime check, not a compile-time guarantee.
+Java iterators are **fail-fast**: modifying the collection during iteration (except through the iterator's own `remove()`) throws `ConcurrentModificationException`. This is detected via an internal modification counter — a runtime check, not a compile-time guarantee. Naftalin & Wadler's Ch.5 spells out the `Iterable` ↔ `Iterator` contract — the usual guard pattern of calling `hasNext()` before `next()` (calling `next()` directly is legal but throws `NoSuchElementException` once the iterator is exhausted), the fail-fast guarantee, and when an explicit iterator is needed rather than the enhanced `for` loop (multi-collection traversal, mid-iteration removal, look-ahead, list-iterator bidirectionality).
 
 Key difference from Rust: Java's `Iterator` is a **separate object** from the collection. It does not own or borrow the collection — it just holds a cursor position. This means Java cannot prevent concurrent modification at compile time.
 
@@ -407,6 +407,8 @@ The `iter()` built-in also has a two-argument sentinel form: `iter(callable, sen
 import functools
 lines = list(iter(functools.partial(input, "Enter: "), ""))
 ```
+
+The *Python Cookbook* Ch.4 (Beazley & Jones) is the catalogue of iterator-protocol patterns that come up in practice: manually driving an iterator and signalling end via `StopIteration`, delegating iteration with `__iter__` (and why that beats embedding `__next__` in the container itself), generators with non-trivial internal state, `itertools.islice` over open-ended generators, `itertools.combinations`/`permutations`/`chain`, paired iteration with `enumerate`/`zip`, building data-processing pipelines as chained generators, flattening nested sequences via `yield from`, and merging sorted iterables with `heapq.merge`.
 
 ### Protocol Comparison
 
@@ -834,7 +836,7 @@ fn process(input: &str) -> Cow<str> {
 
 ### Java: ConcurrentModificationException and Defensive Copies
 
-Java's fail-fast iterators detect modification via an internal modification counter:
+Java's fail-fast iterators detect modification via an internal modification counter. Valeev's *100 Java Mistakes* Ch.8 catalogues the recurring failure modes in this area: searching with the wrong element type (Mistake 69), null elements in null-hostile collections (71), null map values (72), writes to an unmodifiable collection (73), mutable keys in hash-based collections (74), assuming `HashMap`/`HashSet` encounter order (75), concurrent modification during iteration (76), the `List.remove(int)` vs `List.remove(Object)` overload trap and elements skipped during index-based removal (77–78), reads during `removeIf` (79), concurrent modification inside `Map.computeIfAbsent` (80), and iterator-contract violations (81). Ch.9 §9.2–9.5 extends the same lens to streams — side effects inside a chain (83), consuming a stream twice (84), nulls where streams disallow them (85), and violating ordering/statelessness contracts (86).
 
 ```java
 List<String> names = new ArrayList<>(List.of("Alice", "Bob", "Charlie"));
@@ -986,9 +988,9 @@ let sum: i32 = (0..1_000_000)
 
 ### Java: `ConcurrentHashMap`, Blocking Queues, `EnumSet`/`EnumMap`
 
-Java has a rich `java.util.concurrent` package:
+Java has a rich `java.util.concurrent` package. Goetz's *Java Concurrency in Practice* Ch.5 ("Building Blocks") is the canonical motivation: §5.1 dissects why the legacy `Collections.synchronizedXxx()` wrappers are insufficient — compound actions (`put-if-absent`, "iterate and modify") still need external locking and their iterators still throw `ConcurrentModificationException`; §5.2 introduces the JDK 5+ concurrent collections — `ConcurrentHashMap` whose iterators are *weakly consistent* (never throw `ConcurrentModificationException` and may reflect post-iterator-creation updates), versus `CopyOnWriteArrayList`/`Set` whose iterators are *snapshot* iterators bound to the array reference at iterator creation and therefore never observe later mutations; §5.3 lays out the producer–consumer pattern over `BlockingQueue` (`LinkedBlockingQueue`, `ArrayBlockingQueue`, `PriorityBlockingQueue`, `SynchronousQueue`) as a confinement technique that turns "shared state" problems into "queue handoff" problems.
 
-**`ConcurrentHashMap`** uses segmented (striped) locking — concurrent reads require no locking, writes lock only the affected segment. It supports atomic compound operations:
+**`ConcurrentHashMap`** on Java 8+ abandoned the Java 5/6/7 segmented-lock design that Goetz documents (a fixed-size `Segment[]` of ~16 striped locks) in favour of per-bucket synchronization: reads are lock-free, and writes use a CAS to install the first node into an empty bin or `synchronized` on the bin's head node when the bin is non-empty, with treeification at high collision counts. The historical segment-stripe design only survives as the `concurrencyLevel` constructor argument, kept for source compatibility. It supports atomic compound operations:
 
 ```java
 ConcurrentHashMap<String, Integer> map = new ConcurrentHashMap<>();
@@ -1338,7 +1340,7 @@ v.extend(0..1000);  // single allocation + bulk copy
 
 ### Java: Boxing Overhead and JIT Optimization
 
-Java's biggest performance issue with collections is **autoboxing** — `ArrayList<Integer>` stores boxed `Integer` objects:
+Java's biggest performance issue with collections is **autoboxing** — `ArrayList<Integer>` stores boxed `Integer` objects. Oaks's *Java Performance* Ch.12 quantifies the practical levers: synchronized vs unsynchronized collection selection, the cost of under-sized collections (every resize is a copy of every reference) and oversized ones (retained empty slots and rehash dead weight), sizing constructors (`new ArrayList<>(expectedSize)`, `new HashMap<>(capacity, loadFactor)`) to skip resizes on the hot path, and the memory-efficiency tradeoffs between `ArrayList` and primitive arrays (pp. 392–397). On streams (pp. 399–402): lazy traversal genuinely short-circuits, so a `filter`-then-`limit` pipeline visits only as many elements as `limit` needs — but each additional intermediate operation has measurable per-element overhead, so chaining several `filter`/`map` stages adds up, and on small workloads a tight `for` loop can still beat a stream pipeline.
 
 | Storage | Bytes per `int` |
 |---------|----------------|
@@ -1515,8 +1517,11 @@ Python is the most concise (built-in `Counter.most_common`). Java is the most ex
 - Horstmann (2024) — *Core Java, Vol. I*: Ch.8 (generics), Ch.9 (collections framework)
 - Horstmann (2024) — *Core Java, Vol. II*: Ch.1 (streams)
 - Bloch (2018) — *Effective Java*: Ch.5 (generics), Ch.6 Items 36–37 (EnumSet/EnumMap), Ch.7 (lambdas and streams)
-- Naftalin & Wadler (2024) — *Java Generics and Collections*: Part 2 (collections implementations)
+- Naftalin & Wadler (2024) — *Java Generics and Collections*: Chs. 4–13 (main interfaces, `Iterable`/iterators, the `Collection` interface, `SequencedCollection`/`SequencedSet`/`SequencedMap`, Sets, Queues, Lists, Maps, the `Collections` utility class, implementation-choice guidance)
 - Evans et al (2022) — *The Well-Grounded Java Developer*: Ch.6 (concurrent collections), Ch.16 (Fork/Join, parallel streams)
+- Goetz et al (2006) — *Java Concurrency in Practice*: Ch.5 pp. 79–110 (§5.1 hazards of `Collections.synchronizedXxx`, §5.2 concurrent collections and weakly-consistent iterators, §5.3 `BlockingQueue` and the producer–consumer pattern)
+- Valeev (2024) — *100 Java Mistakes and How to Avoid Them*: Ch.8 pp. 213–248 (collections and maps mistakes 69–81), Ch.9 §9.2–9.5 pp. 251–260 (Stream API mistakes 83–86)
+- Oaks (2020) — *Java Performance*: Ch.12 pp. 363–411 (Java SE API performance — collection sizing and resizing, synchronized vs unsynchronized, memory efficiency at pp. 392–397; stream lazy traversal and lambda allocation cost at pp. 399–402)
 
 **Python**
 - Ramalho (2022) — *Fluent Python*: Ch.2 (sequences), Ch.3 (dicts and sets), Ch.17 (iterators and generators)
@@ -1524,6 +1529,7 @@ Python is the most concise (built-in `Counter.most_common`). Java is the most ex
 - Martelli et al (2023) — *Python in a Nutshell*: Ch.3 (data types), Ch.8 (built-in functions, collections, itertools)
 - Gorelick & Ozsvald (2020) — *High Performance Python*: Ch.3 (lists/tuples), Ch.4 (dicts/sets), Ch.5 (iterators/generators)
 - Viafore (2021) — *Robust Python*: Ch.5 (collection type annotations, custom collections)
+- Beazley & Jones (2013) — *Python Cookbook*: Ch.1 pp. 1–36 (data-structure recipes — unpacking, `deque`, `heapq`, `defaultdict`, `OrderedDict`, `Counter`, `ChainMap`, sorting/filtering/grouping, dict subsetting and combination), Ch.4 pp. 113–140 (iterator/generator recipes — iterator protocol, stateful generators, `itertools.islice`/`combinations`/`permutations`/`chain`, `enumerate`/`zip`, data-processing pipelines, flattening, merging sorted iterables)
 
 ### External Resources
 

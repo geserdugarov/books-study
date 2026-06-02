@@ -79,7 +79,7 @@ class ImmutablePoint:
 
 Class decorators compose naturally — you can stack multiple decorators — while metaclasses have the limitation that a class can only have one metaclass.
 
-> **Sources:** Ramalho (2022) Ch.9 pp. 303–340 · Ramalho (2022) Ch.24 pp. 907–920 · Slatkin (2025) Item 38 p. 166 · Slatkin (2025) Item 66 pp. 310–318 · [PEP 318 — Decorators for Functions and Methods](https://peps.python.org/pep-0318/) · [PEP 3129 — Class Decorators](https://peps.python.org/pep-3129/) · [Python docs — `functools.wraps`](https://docs.python.org/3/library/functools.html#functools.wraps) · [Python docs — `functools.singledispatch`](https://docs.python.org/3/library/functools.html#functools.singledispatch)
+> **Sources:** Ramalho (2022) Ch.9 pp. 303–340 · Ramalho (2022) Ch.24 pp. 907–920 · Slatkin (2025) Item 38 p. 166 · Slatkin (2025) Item 66 pp. 310–318 · Beazley (2021) Ch.5 §5.18 pp. 124–127 (decorators — closure-based wrappers, preserving metadata, applying decorators to methods, decorator order and stacking) · Beazley & Jones (2013) Cookbook Ch.9 pp. 329–352 (recipes 9.1–9.10 — decorator that prints a message, decorator that takes arguments, defining a class decorator, decorator preserving signatures via `functools.wraps`, applying decorators to class/static methods, decorator that adds arguments to a function, enforcing type checks on a function with a decorator) · [PEP 318 — Decorators for Functions and Methods](https://peps.python.org/pep-0318/) · [PEP 3129 — Class Decorators](https://peps.python.org/pep-3129/) · [Python docs — `functools.wraps`](https://docs.python.org/3/library/functools.html#functools.wraps) · [Python docs — `functools.singledispatch`](https://docs.python.org/3/library/functools.html#functools.singledispatch)
 
 ### Java: Annotations as Metadata Markers
 
@@ -610,7 +610,7 @@ Key concepts:
 - **`__getattribute__`** intercepts every attribute access — powerful but dangerous (easy to create infinite recursion).
 - **Cost:** attribute access is a dictionary lookup, and introspection calls add overhead — but Python's philosophy is that developer productivity matters more than raw performance.
 
-> **Sources:** Ramalho (2022) Ch.22 pp. 835–850 · [Python docs — `inspect` module](https://docs.python.org/3/library/inspect.html) · [Python docs — Built-in functions](https://docs.python.org/3/library/functions.html) · [Python docs — Data Model](https://docs.python.org/3/reference/datamodel.html)
+> **Sources:** Ramalho (2022) Ch.22 pp. 835–850 · Martelli et al (2023) Ch.17 §"The inspect Module" pp. 528–533 (`signature` for parameter inspection, `getsource` for source retrieval, `getmembers` with predicate filters such as `ismethod`/`isfunction`, `currentframe`/`stack` for frame inspection, and the related debugging-oriented predicates) · Beazley (2021) Ch.5 §5.20 pp. 129–131 (function introspection — `__name__`/`__doc__`/`__qualname__`, attribute attachment, `inspect.signature()` and `Signature.bind()`), §5.21 pp. 131–133 (environment inspection via `inspect.currentframe`, `sys._getframe`, frame-local lookups), §5.22 pp. 133–135 (dynamic code execution and creation with `exec`/`eval`/`compile`, scoping rules and pitfalls) · [Python docs — `inspect` module](https://docs.python.org/3/library/inspect.html) · [Python docs — Built-in functions](https://docs.python.org/3/library/functions.html) · [Python docs — Data Model](https://docs.python.org/3/reference/datamodel.html)
 
 ### Rust: The Deliberate Absence of Reflection
 
@@ -1108,7 +1108,7 @@ Key concepts:
 - **Production usage:** Django models (`ModelBase` metaclass creates database mappings from field definitions), `abc.ABCMeta` (enforces abstract methods), `enum.EnumMeta` (transforms class body into enum members).
 - **Metaclasses should be a last resort** — `__init_subclass__` and class decorators solve most problems more simply (Ramalho, Slatkin).
 
-> **Sources:** Ramalho (2022) Ch.24 pp. 920–956 · Martelli et al (2023) Ch.4 pp. 155–169 · [Python docs — Data Model (metaclasses)](https://docs.python.org/3/reference/datamodel.html#metaclasses) · [PEP 3115 — Metaclasses in Python 3000](https://peps.python.org/pep-3115/) · [Python docs — `type` built-in](https://docs.python.org/3/library/functions.html#type)
+> **Sources:** Ramalho (2022) Ch.24 pp. 920–956 · Martelli et al (2023) Ch.4 pp. 155–169 · Beazley (2021) Ch.7 §7.21 p. 194 (class decorators), §7.22 p. 197 (supervised inheritance via `__init_subclass__`), §7.26 p. 208 (proxies/wrappers/delegation), §7.28 p. 211 (descriptors), §7.29 p. 215 (the class definition process — namespace, `__set_name__`, ordering), §7.30 p. 216 (dynamic class creation via `type(name, bases, dct)`), §7.31 p. 217 (metaclasses — `__new__`/`__init__`/`__prepare__`, when each hook fires) · Beazley & Jones (2013) Cookbook Ch.9 pp. 353–396 (metaprogramming recipes — metaclasses to control instance creation, capture attribute definition order, accept optional class arguments, enforce coding conventions; descriptor patterns; multiple dispatch via annotations; programmatic class creation; executing code with local side effects; parsing/analyzing Python source via `ast`; disassembling bytecode) · [Python docs — Data Model (metaclasses)](https://docs.python.org/3/reference/datamodel.html#metaclasses) · [PEP 3115 — Metaclasses in Python 3000](https://peps.python.org/pep-3115/) · [Python docs — `type` built-in](https://docs.python.org/3/library/functions.html#type)
 
 ### Python: `__init_subclass__` and `__set_name__` as Metaclass Alternatives
 
@@ -1326,7 +1326,7 @@ Key concepts:
 - **AST is structural, not textual** — formatting is lost; `ast.unparse()` regenerates clean source.
 - Compare with Rust: Python's AST is available at runtime and can be manipulated by user code; Rust's AST is only available during compilation within proc macros.
 
-> **Sources:** Shaw (2021) Ch.5 pp. 91–117 · [Python docs — `ast` module](https://docs.python.org/3/library/ast.html) · [Green Tree Snakes — the missing Python AST docs](https://greentreesnakes.readthedocs.io/en/latest/)
+> **Sources:** Shaw (2021) Ch.5 pp. 91–117 · Beazley & Jones (2013) Cookbook §9.24–9.25 pp. 388–395 (parsing and analyzing Python source via `ast.parse()` and `ast.NodeVisitor`, disassembling bytecode via `dis`; recipes show the read-only visitor pattern, which is the entry point before `NodeTransformer` rewrites — for full source-regenerating round-trips see `ast.unparse()` added in Python 3.9) · [Python docs — `ast` module](https://docs.python.org/3/library/ast.html) · [Green Tree Snakes — the missing Python AST docs](https://greentreesnakes.readthedocs.io/en/latest/)
 
 ### Python: `dis`, Bytecode Inspection, and `exec`/`eval`
 
@@ -1461,7 +1461,9 @@ Key concepts:
 - **Java agents** (`java.lang.instrument`) use bytecode engineering to transform classes as they are loaded — enabling profiling, monitoring, and AOP (aspect-oriented programming).
 - **Unique capability:** Java can create entirely new classes at runtime from bytecode — something neither Rust (no runtime code generation) nor Python (creates classes via `type()` but not from bytecode) can do natively.
 
-> **Sources:** Evans et al (2022) Ch.4 pp. 90–111 · Horstmann (2024) Ch.11 pp. 148–149 · [ASM bytecode engineering library — Guide](https://asm.ow2.io/asm4-guide.pdf) · [Byte Buddy — Tutorial](https://bytebuddy.net/#/tutorial) · [`javassist` library](https://www.javassist.org/) · [JVM Specification — Class File Format (Ch.4)](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-4.html)
+A higher-level, in-tree counterpart to Python's `compile`+`exec` pipeline lives in `javax.tools`. Horstmann Vol. II Ch.8 §8.1 pp. 562–572 walks the Compiler API: obtaining a `JavaCompiler` via `ToolProvider.getSystemJavaCompiler()`, launching a `CompilationTask` against a `StandardJavaFileManager`, capturing structured diagnostics through a `DiagnosticListener`, and reading source from in-memory `JavaFileObject`s instead of disk — all from inside a running JVM. §8.2 pp. 573–584 covers the Scripting API (`javax.script.ScriptEngineManager`), which embeds languages like JavaScript or Groovy inside a Java application and shares variables across the boundary via `Bindings`. Together these two §-APIs give Java a sanctioned path from "string of code" to "executed code" without ever touching bytecode or `Unsafe`.
+
+> **Sources:** Evans et al (2022) Ch.4 pp. 90–111 · Horstmann (2024) Vol. I Ch.11 pp. 148–149 · Horstmann (2024) Vol. II Ch.8 §8.1–8.2 pp. 562–584 (the `javax.tools` Compiler API at §8.1 pp. 562–572 — `JavaCompiler`, `CompilationTask`, in-memory `JavaFileObject`, `DiagnosticListener`; the Scripting API at §8.2 pp. 573–584 — `ScriptEngineManager`, embedding JavaScript/Groovy, `Bindings` for cross-language variables) · [ASM bytecode engineering library — Guide](https://asm.ow2.io/asm4-guide.pdf) · [Byte Buddy — Tutorial](https://bytebuddy.net/#/tutorial) · [`javassist` library](https://www.javassist.org/) · [JVM Specification — Class File Format (Ch.4)](https://docs.oracle.com/javase/specs/jvms/se21/html/jvms-4.html)
 
 ### Synthesis: The Metaprogramming Spectrum
 
@@ -1498,13 +1500,16 @@ The key insight: metaprogramming is about which layer of the language is program
 
 **Java**
 - Horstmann (2024) — *Core Java, Vol. I*: Ch.11 pp. 140–149 (annotations), Ch.5.10 pp. 80–81 (reflection)
+- Horstmann (2024) — *Core Java, Vol. II*: Ch.8 §8.1–8.2 pp. 562–584 (the `javax.tools` Compiler API for programmatic compilation, and the Scripting API for embedding JavaScript/Groovy — programmatic code generation and dynamic execution on the JVM)
 - Bloch (2018) — *Effective Java*: Item 39 pp. 180–187 (annotations vs naming patterns), Item 65 p. 283 (interfaces vs reflection)
 - Evans et al (2022) — *The Well-Grounded Java Developer*: Ch.4 pp. 81–117 (class loading, reflection), Ch.17 pp. 571–607 (method handles, invokedynamic)
 
 **Python**
 - Ramalho (2022) — *Fluent Python*: Ch.9 pp. 303–340 (decorators), Ch.22 pp. 835–878 (dynamic attributes), Ch.23 pp. 879–906 (descriptors), Ch.24 pp. 907–956 (metaclasses)
-- Martelli et al (2023) — *Python in a Nutshell*: Ch.4 pp. 115–169 (OOP, decorators, metaclasses)
+- Martelli et al (2023) — *Python in a Nutshell*: Ch.4 pp. 115–169 (OOP, decorators, metaclasses), Ch.17 §"The inspect Module" pp. 528–533 (runtime introspection — `signature`, `getsource`, `getmembers`, `currentframe`/`stack`)
 - Slatkin (2025) — *Effective Python*: Item 38 p. 166 (functools.wraps), Ch.8 pp. 265–318 (metaclasses and attributes)
+- Beazley (2021) — *Python Distilled*: Ch.5 §5.18–5.22 pp. 124–135 (decorators, function introspection / `inspect.signature()`, environment inspection, dynamic code execution via `exec`/`eval`/`compile`), Ch.7 §§7.21–7.22, 7.26, 7.28–7.31 pp. 194–221 (class metaprogramming machinery — class decorators, `__init_subclass__`, proxies/wrappers/delegation, descriptors, the class definition process, dynamic class creation, metaclasses)
+- Beazley & Jones (2013) — *Python Cookbook*: Ch.9 pp. 329–396 (metaprogramming recipes — decorators with/without arguments, class-method decorators, metaclasses, descriptor patterns, multiple dispatch via annotations, programmatic class creation, `ast` analysis, bytecode disassembly), §10.11–10.12 pp. 412–430 (import-hook metaprogramming — `sys.meta_path` finders/loaders, patching modules on import)
 - Shaw (2021) — *CPython Internals*: Ch.5 pp. 91–117 (AST), Ch.6 pp. 118–150 (compiler), Ch.7 pp. 151–175 (evaluation loop)
 
 ### External Resources
