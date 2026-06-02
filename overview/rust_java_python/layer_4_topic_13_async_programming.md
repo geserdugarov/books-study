@@ -446,7 +446,7 @@ Key concepts:
 - **`StructuredTaskScope`** (JDK 25 preview under JEP 505) — parent scope manages child tasks with automatic cancellation and exception propagation. The default `Joiner.awaitAllSuccessfulOrThrow()` (used by `StructuredTaskScope.open()`) cancels remaining tasks when one fails; `Joiner.anySuccessfulResultOrThrow()` races subtasks and cancels the rest when one succeeds. (JDK 26 / JEP 525 renames the race policy to `Joiner.anySuccessfulOrThrow()` and changes `Joiner.allSuccessfulOrThrow()` to return `List<T>`.)
 - **Netty alternative** — Netty uses a small number of event loop threads, each running an I/O multiplexer (`epoll`), processing events via `ChannelHandler` pipelines. This is explicit async I/O requiring callback-based programming. Virtual threads make Netty-style NIO unnecessary for most use cases.
 
-> **Sources:** Rahman (2025) Ch.2 pp. 46–51 · Rahman (2025) Ch.3 pp. 113–123 · Rahman (2025) Ch.6 pp. 249–276 · Lea (1999) Ch.3.4 pp. 199–240 · [JEP 444 — Virtual Threads (scheduling detail)](https://openjdk.org/jeps/444) · [Netty user guide](https://netty.io/wiki/user-guide-for-4.x.html) · [Project Reactor reference](https://projectreactor.io/docs/core/release/reference/)
+> **Sources:** Rahman (2025) Ch.2 pp. 46–51 · Rahman (2025) Ch.3 pp. 113–123 · Rahman (2025) Ch.6 pp. 249–276 · Evans & Gough (2024) Ch.13 pp. 368–375 (virtual-thread introduction and concurrency patterns — when virtual threads pay off and which patterns to reach for) · Lea (1999) Ch.3.4 pp. 199–240 · [JEP 444 — Virtual Threads (scheduling detail)](https://openjdk.org/jeps/444) · [Netty user guide](https://netty.io/wiki/user-guide-for-4.x.html) · [Project Reactor reference](https://projectreactor.io/docs/core/release/reference/)
 
 ### Python: The `asyncio` Event Loop
 
@@ -664,7 +664,7 @@ Key concepts:
 - **Native coroutines vs generators** — you cannot use `yield` in an `async def` (unless creating an async generator). This syntactic separation was added by PEP 492 to prevent confusion.
 - **CPython bytecodes** — `GET_AWAITABLE`, `YIELD_FROM`, `SEND` opcodes implement the coroutine protocol at the interpreter level.
 
-> **Sources:** Ramalho (2022) Ch.17 pp. 641–652 · Ramalho (2022) Ch.21 pp. 782–785 · Shaw (2021) pp. 265–278 · Beazley (2021) Ch.6 pp. 139–152 · Beazley (2021) Ch.5.23 pp. 101–137 · [PEP 492 — Coroutines with async and await syntax](https://peps.python.org/pep-0492/) · [Python docs — Await expression](https://docs.python.org/3/reference/expressions.html#await) · [Brett Cannon — "How the heck does async/await work in Python 3.5?"](https://snarky.ca/how-the-heck-does-async-await-work-in-python-3-5/)
+> **Sources:** Ramalho (2022) Ch.17 pp. 641–652 · Ramalho (2022) Ch.21 pp. 782–785 · Shaw (2021) pp. 265–278 · Beazley (2021) Ch.6 pp. 139–152 · Beazley (2021) Ch.5.23 pp. 101–137 · Beazley & Jones (2013) Recipe 12.12 pp. 524–531 (hand-rolled cooperative scheduler driven by `yield` — the pre-`asyncio` pattern PEP 492 codified into `async`/`await`) · [PEP 492 — Coroutines with async and await syntax](https://peps.python.org/pep-0492/) · [Python docs — Await expression](https://docs.python.org/3/reference/expressions.html#await) · [Brett Cannon — "How the heck does async/await work in Python 3.5?"](https://snarky.ca/how-the-heck-does-async-await-work-in-python-3-5/)
 
 ### Cross-Language Comparison
 
@@ -891,7 +891,7 @@ Key concepts:
 - **Structured concurrency (`StructuredTaskScope`, JDK 25 preview under JEP 505)** — cancellation flows from parent to children. When the active `Joiner` policy signals termination (e.g., the default `Joiner.awaitAllSuccessfulOrThrow()` on the first failure, or `Joiner.anySuccessfulResultOrThrow()` on the first success — renamed `Joiner.anySuccessfulOrThrow()` in JDK 26 / JEP 525), every other running subtask is cancelled (interrupted). Scope exit cancels remaining tasks.
 - **Cooperative** — the task must respond to interruption. Compare with Rust where drop is unconditional.
 
-> **Sources:** Goetz (2006) Ch.7 pp. 135–161 · Lea (1999) Ch.3.1 pp. 149–170 · Rahman (2025) Ch.4 pp. 125–140 · [JEP 505 — Structured Concurrency (Fifth Preview, JDK 25)](https://openjdk.org/jeps/505) · [JEP 525 — Structured Concurrency (Sixth Preview, JDK 26)](https://openjdk.org/jeps/525) · [Java docs — `Thread.interrupt()`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html#interrupt()) · [Java docs — `Future.cancel()`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/Future.html#cancel(boolean))
+> **Sources:** Goetz (2006) Ch.7 pp. 135–161 · Lea (1999) Ch.3.1 pp. 149–170 · Rahman (2025) Ch.4 pp. 125–140 · Evans & Gough (2024) Ch.15 pp. 405–411 (structured concurrency and scoped values — scope-based cancellation within the JVM modernization roadmap) · [JEP 505 — Structured Concurrency (Fifth Preview, JDK 25)](https://openjdk.org/jeps/505) · [JEP 525 — Structured Concurrency (Sixth Preview, JDK 26)](https://openjdk.org/jeps/525) · [Java docs — `Thread.interrupt()`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Thread.html#interrupt()) · [Java docs — `Future.cancel()`](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/Future.html#cancel(boolean))
 
 ### Python: `CancelledError` and `TaskGroup`
 
@@ -951,12 +951,12 @@ async def gather_example():
 Key concepts:
 
 - **`task.cancel()`** — schedules a `CancelledError` to be thrown at the next `await` point. The coroutine can catch it for cleanup but should re-raise it.
-- **`CancelledError` is a `BaseException`** (since Python 3.9) — `except Exception:` no longer catches it. This prevents accidentally swallowing cancellations.
+- **`CancelledError` is a `BaseException`** (since Python 3.8) — `except Exception:` no longer catches it. This prevents accidentally swallowing cancellations.
 - **`asyncio.TaskGroup`** (Python 3.11+) — structured concurrency. If any task in the group raises, all other tasks are cancelled and exceptions are collected into an `ExceptionGroup`.
 - **`asyncio.timeout()`** and **`asyncio.wait_for()`** — use cancellation internally. When a timeout expires, the wrapped task is cancelled.
 - **Cooperative** — the task must reach an `await` point for cancellation to take effect. A CPU-bound coroutine that never awaits cannot be cancelled.
 
-> **Sources:** Hattingh (2020) Ch.3 pp. 55–73 · [Python docs — `Task.cancel()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task.cancel) · [Python docs — `TaskGroup`](https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup) · [PEP 654 — Exception Groups and `except*`](https://peps.python.org/pep-0654/)
+> **Sources:** Hattingh (2020) Ch.3 pp. 55–73 · Slatkin (2025) Item 77 pp. 381–389 (especially pp. 384–388 — owned-book reference for `asyncio.TaskGroup` fan-out/fan-in shape, new in Python 3.11) · [Python docs — `Task.cancel()`](https://docs.python.org/3/library/asyncio-task.html#asyncio.Task.cancel) · [Python docs — `TaskGroup`](https://docs.python.org/3/library/asyncio-task.html#asyncio.TaskGroup) · [PEP 654 — Exception Groups and `except*`](https://peps.python.org/pep-0654/)
 
 ### Cross-Language Comparison
 
