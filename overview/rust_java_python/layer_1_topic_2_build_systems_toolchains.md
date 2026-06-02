@@ -483,7 +483,7 @@ The key distinction: `implementation` keeps dependencies off the compile classpa
 
 ---
 
-### Python: From No Resolver to SAT Solvers
+### Python: From No Resolver to PubGrub Backtracking
 
 Python's dependency resolution has evolved dramatically:
 
@@ -504,7 +504,9 @@ Python's dependency resolution has evolved dramatically:
 - Tilde: `~1.2.3` means `>=1.2.3, <1.3.0`
 - Wildcard: `1.*` means `>=1.0.0, <2.0.0`
 
-**uv's resolver** is written in Rust and uses **universal resolution**: it produces a single lockfile that works across all platforms and Python versions. The resolver:
+Poetry uses a **PubGrub-style conflict-driven backtracking resolver** (the same family as uv's resolver, not a raw SAT solver).
+
+**uv's resolver** is written in Rust and uses the **PubGrub** algorithm — a conflict-driven, clause-learning backtracking solver (not a raw SAT solver). It supports **universal resolution**: a single lockfile that works across all platforms and Python versions. The resolver:
 - Creates platform-independent lockfiles
 - May include multiple versions of a package with environment markers for different platforms
 - Supports resolution strategies: `--resolution lowest` (oldest compatible), `--resolution lowest-direct` (oldest for direct deps, latest for transitive)
@@ -516,7 +518,7 @@ Python's dependency resolution has evolved dramatically:
 
 | Aspect | Cargo (Rust) | Maven (Java) | Gradle (Java) | pip (Python) | uv (Python) | Poetry (Python) |
 |--------|-------------|--------------|---------------|-------------|------------|-----------------|
-| **Algorithm** | Backtracking | Nearest wins | Newest wins | Backtracking | SAT-based | SAT-based |
+| **Algorithm** | Backtracking | Nearest wins | Newest wins | Backtracking | PubGrub (backtracking) | PubGrub-style (backtracking) |
 | **Version syntax** | `^1.2`, `~1.2`, `=1.2` | `[1.2,2.0)`, exact | Same as Maven | `>=1.2,<2.0`, `~=1.2` | PEP 440 | `^1.2`, `~1.2` |
 | **Registry** | crates.io | Maven Central | Maven Central | PyPI | PyPI | PyPI |
 | **Transitive** | Automatic | Automatic | Automatic | Automatic | Automatic | Automatic |
@@ -994,7 +996,7 @@ javac HelloWorld.java && native-image HelloWorld
 - Dramatically reduced memory footprint
 - No JVM required at runtime
 
-**Key limitation — the Closed World Assumption**: Native Image performs static analysis at build time. Dynamic features (reflection, JNI, dynamic proxies, runtime class loading) require explicit metadata configuration. Frameworks like Spring and Quarkus provide this metadata automatically.
+**Key limitation — the Closed World Assumption**: Native Image performs static analysis at build time. Dynamic features (reflection, JNI, dynamic proxies, runtime class loading) require explicit metadata configuration. Frameworks like Spring and Quarkus provide this metadata automatically. Oaks notes the resulting performance tradeoff: native binaries start "quite fast" and have a smaller initial footprint than the JVM, but in this mode GraalVM does not optimize code as aggressively as the C2 compiler, so for sufficiently long-running applications the traditional JVM still wins on peak throughput. Beckwith situates native-image generation within the broader JVM start-up effort to reduce time to steady state, and Evans/Gough — who describe Quarkus and GraalVM as "shifting compilation earlier" in the program lifecycle — note that many developers and teams find using Quarkus in native mode easier than building from GraalVM directly, because the framework has already done the heavy lifting of making libraries work in native mode (Red Hat recommends the downstream **Mandrel** distribution of GraalVM CE specifically for this workflow).
 
 **Multi-release JARs (JEP 238):**
 
@@ -1012,7 +1014,7 @@ com/example/Util.class          # Base version (Java 8 compatible)
 
 The JVM automatically picks the most appropriate version at runtime.
 
-> **Sources:** Evans et al (2022) Ch.2 pp. 26–54 · Horstmann (2024) Ch.12 · [GraalVM Native Image](https://www.graalvm.org/latest/reference-manual/native-image/) · [JLink](https://docs.oracle.com/en/java/javase/21/docs/specs/man/jlink.html) · [JEP 238 — Multi-Release JARs](https://openjdk.org/jeps/238)
+> **Sources:** Evans et al (2022) Ch.2 pp. 26–54 · Horstmann (2024) Ch.12 · Oaks (2020) Ch.4 pp. 115–120 ("The GraalVM" and "GraalVM Native Compilation") · Beckwith (2024) Ch.8 pp. 290–298 ("GraalVM: Revolutionizing Java's Time to Steady State") · Evans & Gough (2024) Ch.6 pp. 163–167 (AOT, Quarkus native mode, GraalVM native image with reflection-configuration constraints) · [GraalVM Native Image](https://www.graalvm.org/latest/reference-manual/native-image/) · [JLink](https://docs.oracle.com/en/java/javase/21/docs/specs/man/jlink.html) · [JEP 238 — Multi-Release JARs](https://openjdk.org/jeps/238)
 
 ---
 
@@ -1042,8 +1044,10 @@ cibuildwheel --platform linux    # Build wheels for Linux
 **manylinux** is a specification defining a portable Linux ABI baseline. Wheels tagged `manylinux_2_17` work on any Linux distribution with glibc >= 2.17 (CentOS 7+).
 
 **Bundling Python into standalone executables:**
-- **PyInstaller** — bundles Python interpreter + code + dependencies into a single executable
-- **Nuitka** — compiles Python to C, then to a native executable (sometimes with speedups)
+- **`zipapp` / `zipimport`** (stdlib) — Slatkin Item 125 walks through building a self-contained `.pyz` archive with `python -m zipapp ... -m "pkg.__main__:main"` and notes the key limitation: zipped archives cannot transparently import C extension modules, which the user's program (or any dependency) almost always needs.
+- **Pex** — a community alternative to `zipapp` that preserves the zip-archive deployment model while sidestepping its main limitations; Slatkin recommends Pex over the built-in modules for non-trivial deployments.
+- **PyInstaller** — bundles the Python interpreter itself plus code and dependencies into a single executable, so the end user does not need Python installed; Slatkin highlights it as the next step beyond Pex when the user's system has no Python at all, and Martelli lists it alongside **PyOxidizer** and **cx_Freeze** as out-of-scope distribution options for shipping executables.
+- **Nuitka** — compiles Python to C, then to a native executable (sometimes with speedups). Gorelick describes it as a Python-to-C compiler distinct from the JIT-based Numba and the static Cython approaches.
 
 **Compiling C extensions (from Gorelick & Ozsvald):**
 
@@ -1078,7 +1082,7 @@ Near-Cython performance with far less effort. Supports `parallel=True` with `pra
 - **f2py** — Fortran-to-Python bridge (part of numpy)
 - **CPython C API** — maximum control, maximum complexity
 
-> **Sources:** Gorelick & Ozsvald (2020) Ch.7 pp. 161–211 · [cibuildwheel](https://cibuildwheel.pypa.io/) · [manylinux](https://github.com/pypa/manylinux) · [PyInstaller](https://pyinstaller.org/) · [Nuitka](https://nuitka.net/)
+> **Sources:** Gorelick & Ozsvald (2020) Ch.7 pp. 161–211 (p. 189 for Nuitka) · Martelli et al (2023) Ch.24 pp. 655–658 (packaging-history overview including PyInstaller, PyOxidizer, cx_Freeze, and the stdlib `zipapp` module) · Slatkin (2025) Item 125 pp. 621–627 ("Prefer Open Source Projects for Bundling Python Programs over zipimport and zipapp") · [cibuildwheel](https://cibuildwheel.pypa.io/) · [manylinux](https://github.com/pypa/manylinux) · [PyInstaller](https://pyinstaller.org/) · [Nuitka](https://nuitka.net/)
 
 ---
 
@@ -1526,8 +1530,12 @@ jobs:
 | Matthews (2024) — *Code Like a Pro in Rust* | Ch.2 pp. 11–42, Ch.3 pp. 43–62 | `books/Rust/Matthews 2024 Code like a pro in Rust.pdf` |
 | Horstmann (2024) — *Core Java, Vol. I* | Ch.2, Ch.4 §4.8–4.10, Ch.12 | `books/Java/Horstmann 2024 Core Java. I Fundamentals.pdf` |
 | Evans et al (2022) — *The Well-Grounded Java Developer* | Ch.2 pp. 26–54, Ch.11 pp. 345–399 | `books/Java/Evans et al 2022 The well-grounded Java developer.pdf` |
+| Oaks (2020) — *Java Performance* | Ch.4 pp. 115–120 ("The GraalVM", "GraalVM Native Compilation") | `books/Java/Oaks 2020 Java performance.pdf` |
+| Beckwith (2024) — *JVM Performance Engineering* | Ch.8 pp. 290–298 ("GraalVM: Revolutionizing Java's Time to Steady State") | `books/Java/Beckwith 2024 JVM performance engineering.pdf` |
+| Evans & Gough (2024) — *Optimizing Cloud Native Java* | Ch.6 pp. 163–167 (AOT pp. 163–164, Quarkus pp. 164–166, GraalVM p. 167) | `books/Java/Evans, Gough 2024 Optimizing cloud native Java.pdf` |
 | Martelli et al (2023) — *Python in a Nutshell* | Ch.7 pp. 221–245, Ch.24 pp. 655–658 | `books/Python/Martelli et al 2023 Python in a nutshell.pdf` |
-| Gorelick & Ozsvald (2020) — *High Performance Python* | Ch.7 pp. 161–211 | `books/Python/Gorelick, Ozsvald 2020 High performance Python.pdf` |
+| Gorelick & Ozsvald (2020) — *High Performance Python* | Ch.7 pp. 161–211 (Nuitka on p. 189) | `books/Python/Gorelick, Ozsvald 2020 High performance Python.pdf` |
+| Slatkin (2025) — *Effective Python* | Item 125 pp. 621–627 ("Prefer Open Source Projects for Bundling Python Programs over zipimport and zipapp") | `books/Python/Slatkin 2025 Effective Python.pdf` |
 
 ### External Resources
 

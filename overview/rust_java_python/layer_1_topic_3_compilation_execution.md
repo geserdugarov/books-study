@@ -396,6 +396,8 @@ Native Image operates under the **closed-world assumption**: all bytecode callab
 - Dynamic proxies → `proxy-config.json`
 - Resource loading → `resource-config.json`
 
+Evans & Gough frame the closed-world constraint as imposing "very strict limits on Java's natural dynamism, particularly on the run-time reflection and class-loading features" — many existing libraries and frameworks depend on these aspects, so not all applications are well suited to it. They also note the practical workflow: **many developers and teams find that using Quarkus in native mode is easier than building directly from scratch using GraalVM**, because Quarkus has already done the heavy lifting of making libraries work in native mode (Red Hat recommends the downstream **Mandrel** distribution of GraalVM CE specifically for Quarkus applications).
+
 | Aspect | HotSpot JIT | GraalVM Native Image |
 |--------|------------|---------------------|
 | Compilation time | At runtime | At build time |
@@ -415,7 +417,7 @@ Native Image operates under the **closed-world assumption**: all bytecode callab
 
 **JEP 295 (jaotc)** was an earlier experimental AOT approach in JDK 9: the `jaotc` tool produced shared libraries (`.so`) using Graal as the code-generating backend. These AOT libraries were treated as an extension of the CodeCache at runtime. A class fingerprinting mechanism validated that bytecode hadn't changed since AOT compilation. Two modes were supported: non-tiered (behaves like statically compiled C++ code) and tiered (collects profiling for later C2 recompilation). The experimental AOT compiler and the experimental Graal JIT integration were both removed in JDK 17 by **JEP 410**; subsequent OpenJDK AOT work moved into **Project Leyden** (in-tree) and **GraalVM Native Image** (separate distribution).
 
-> **Sources:** Evans et al (2022) Ch.7 pp. 230–246 · Oaks (2020) Ch.4 pp. 115–120 · Beckwith (2024) Ch.8 pp. 273–306 · [GraalVM — Compiler](https://www.graalvm.org/latest/reference-manual/java/compiler/) · [GraalVM — Native Image](https://www.graalvm.org/latest/reference-manual/native-image/) · [Oracle — CDS](https://docs.oracle.com/en/java/javase/21/vm/class-data-sharing.html) · [JEP 295](https://openjdk.org/jeps/295)
+> **Sources:** Evans et al (2022) Ch.7 pp. 230–246 · Oaks (2020) Ch.4 pp. 115–120 · Beckwith (2024) Ch.8 pp. 273–306 · Evans & Gough (2024) Ch.6 pp. 163–167 (AOT pp. 163–164, Quarkus pp. 164–166, GraalVM p. 167 — describes the closed-world constraint and the practical preference for Quarkus + Mandrel over standalone GraalVM builds) · [GraalVM — Compiler](https://www.graalvm.org/latest/reference-manual/java/compiler/) · [GraalVM — Native Image](https://www.graalvm.org/latest/reference-manual/native-image/) · [Oracle — CDS](https://docs.oracle.com/en/java/javase/21/vm/class-data-sharing.html) · [JEP 295](https://openjdk.org/jeps/295)
 
 ### Performance Testing and Monitoring
 
@@ -526,7 +528,7 @@ The `dis` module provides: `dis.dis()` (disassemble functions/classes/modules), 
 - **The value stack**: Bytecode instructions operate on a per-frame LIFO stack. `LOAD_FAST` pushes a local variable onto the stack; `BINARY_ADD` pops two values, adds them, and pushes the result. The maximum stack depth is computed at compile time (`co_stacksize`).
 - **Frame execution cycle**: The main loop in `_PyEval_EvalFrameDefault()` fetches the next opcode, dispatches through a giant switch statement (or computed goto on supported platforms), executes the operation, and advances the instruction pointer. On every iteration, the loop checks for pending signals, thread switches (every 5ms by default), and async exceptions.
 
-> **Sources:** Ramalho (2022) Ch.2 · Gorelick & Ozsvald (2020) Ch.2 pp. 21–45 · Shaw (2021) pp. 151–175 · [Python docs — `dis` module](https://docs.python.org/3/library/dis.html)
+> **Sources:** Ramalho (2022) Ch.9 pp. 310–311 ("Comparing Bytecodes" sidebar — contrasts `LOAD_FAST` vs `LOAD_GLOBAL` to show how the compiler classifies names as local vs global) · Gorelick & Ozsvald (2020) Ch.2 pp. 21–64 (pp. 55–57 "Using the dis Module to Examine CPython Bytecode") · Shaw (2021) pp. 151–175 · [Python docs — `dis` module](https://docs.python.org/3/library/dis.html)
 
 ### .pyc Files and Caching
 
@@ -1099,11 +1101,12 @@ The trend is toward **compilation-time interop** (Rust→Python via PyO3, Rust�
 | Bloch (2018) — *Effective Java* | Generics chapters (type erasure) | `books/Java/Bloch 2018 Effective Java.pdf` |
 | Valeev (2024) — *100 Java Mistakes* | Ch.1 pp. 1–18 | `books/Java/Valeev 2024 100 Java mistakes.pdf` |
 | Martelli et al (2023) — *Python in a Nutshell* | Ch.1 pp. 1–19, Ch.2 pp. 21–31, Ch.14 pp. 429–441 | `books/Python/Martelli et al 2023 Python in a nutshell.pdf` |
-| Ramalho (2022) — *Fluent Python* | Ch.2, Ch.19 pp. 695–742 | `books/Python/Ramalho 2022 Fluent Python.pdf` |
+| Ramalho (2022) — *Fluent Python* | Ch.9 pp. 310–311 ("Comparing Bytecodes" sidebar — `LOAD_FAST` vs `LOAD_GLOBAL`), Ch.19 pp. 695–742 | `books/Python/Ramalho 2022 Fluent Python.pdf` |
 | Gorelick & Ozsvald (2020) — *High Performance Python* | Ch.1 pp. 1–20, Ch.2 pp. 21–64, Ch.7 pp. 161–211 | `books/Python/Gorelick, Ozsvald 2020 High performance Python.pdf` |
 | McNamara (2021) — *Rust in Action* | Ch.5 pp. 137–173, Ch.6 pp. 175–211, Ch.10 pp. 328–363, Ch.11 pp. 365–387, Ch.12 pp. 390–417 | `books/Rust/McNamara 2021 Rust in Action.pdf` |
 | Oaks (2020) — *Java Performance* | Ch.2 pp. 15–48, Ch.3 pp. 49–88, Ch.4 pp. 89–120, Ch.5 pp. 121–152, Ch.6 pp. 153–201 | `books/Java/Oaks 2020 Java performance.pdf` |
 | Beckwith (2024) — *JVM Performance Engineering* | Ch.1 pp. 1–42, Ch.5 pp. 115–175, Ch.6 pp. 177–217, Ch.7 pp. 219–270, Ch.8 pp. 273–306, Ch.9 pp. 307–336 | `books/Java/Beckwith 2024 JVM performance engineering.pdf` |
+| Evans & Gough (2024) — *Optimizing Cloud Native Java* | Ch.6 pp. 163–167 (AOT pp. 163–164, Quarkus pp. 164–166, GraalVM p. 167) | `books/Java/Evans, Gough 2024 Optimizing cloud native Java.pdf` |
 | Shaw (2021) — *CPython Internals* | pp. 42–60, 61–74, 91–150, 151–175, 177–219, 221–283 | `books/Python/Shaw 2020 CPython internals.pdf` |
 
 ### External Resources
