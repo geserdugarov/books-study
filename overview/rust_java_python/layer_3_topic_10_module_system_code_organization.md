@@ -209,7 +209,7 @@ if __name__ == "__main__":
 
 **Namespace packages** (PEP 420) enable splitting a package across multiple directories or distributions without `__init__.py`. This is used by large organizations to distribute a shared namespace (`google.*`, `azure.*`). Namespace packages have no `__file__` attribute and their `__path__` is computed dynamically.
 
-> **Sources:** Martelli et al (2023) Ch.7 pp. 221–245 · Slatkin (2025) Ch.14 Item 119 pp. 588–592, Item 122 pp. 600–604 · [Python docs — The Import System](https://docs.python.org/3/reference/import.html) · [Python docs — Modules tutorial](https://docs.python.org/3/tutorial/modules.html) · [PEP 328 — Imports: Multi-Line and Absolute/Relative](https://peps.python.org/pep-0328/) · [Real Python — Python Modules and Packages](https://realpython.com/python-modules-packages/) · [PEP 420 — Implicit Namespace Packages](https://peps.python.org/pep-0420/)
+> **Sources:** Martelli et al (2023) Ch.7 pp. 221–245 · Beazley (2021) Ch.8 pp. 225–245 (import mechanics, module caching via `sys.modules`, circular-import recovery, module reloading/unloading, `.pyc` compilation, search path, execution as `__main__`, intra-package imports, running a package submodule as a script, controlling the package namespace via `__init__.py` and exports via `__all__`, package data, deploying Python packages — "start with a package" guidance) · Slatkin (2025) Ch.14 Item 119 pp. 588–592, Item 122 pp. 600–604 · [Python docs — The Import System](https://docs.python.org/3/reference/import.html) · [Python docs — Modules tutorial](https://docs.python.org/3/tutorial/modules.html) · [PEP 328 — Imports: Multi-Line and Absolute/Relative](https://peps.python.org/pep-0328/) · [Real Python — Python Modules and Packages](https://realpython.com/python-modules-packages/) · [PEP 420 — Implicit Namespace Packages](https://peps.python.org/pep-0420/)
 
 ### Cross-Language Comparison
 
@@ -707,7 +707,7 @@ Circular dependencies are a structural problem in Python. Slatkin's Item 122 off
 2. **Deferred imports** — import inside functions instead of at module level
 3. **Late binding** — use `importlib.import_module()` at the point of use
 
-> **Sources:** Slatkin (2025) Ch.14 Item 119 pp. 588–592, Item 122 pp. 600–604 · [Python Packaging User Guide — Packaging Python Projects](https://packaging.python.org/en/latest/tutorials/packaging-projects/) · [Python docs — Regular Packages](https://docs.python.org/3/reference/import.html#regular-packages) · [Real Python — Python Application Layouts](https://realpython.com/python-application-layouts/)
+> **Sources:** Slatkin (2025) Ch.14 Item 119 pp. 588–592, Item 122 pp. 600–604 · Beazley & Jones (2013) Cookbook Ch.10 pp. 397–435 (hierarchical packages, controlling `from x import *` via `__all__`, relative imports, splitting a module across files, namespace packages (PEP 420), module reloading, runnable directories/zips, reading package data files via `pkgutil.get_data()`, `sys.path` management, importing by string name, import hooks via `sys.meta_path`, patching modules on import, per-user installs, virtual environments, package distribution) · [Python Packaging User Guide — Packaging Python Projects](https://packaging.python.org/en/latest/tutorials/packaging-projects/) · [Python docs — Regular Packages](https://docs.python.org/3/reference/import.html#regular-packages) · [Python docs — `importlib.resources`](https://docs.python.org/3/library/importlib.resources.html) · [Real Python — Python Application Layouts](https://realpython.com/python-application-layouts/)
 
 ### Cross-Language Project Structure Comparison
 
@@ -875,7 +875,7 @@ Gradle's resolution is more sophisticated: it picks the **highest compatible ver
 
 A critical difference from Cargo: **neither Maven nor Gradle can include two incompatible versions of the same library** — only one version wins, which can cause binary compatibility problems at runtime.
 
-> **Sources:** [Maven — Introduction to the Dependency Mechanism](https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html) · [Baeldung — Maven vs Gradle](https://www.baeldung.com/ant-maven-gradle)
+> **Sources:** Evans et al (2022) Ch.11 pp. 345–399 (build-tool rationale, automating tedious operations, managing dependencies, ensuring consistency; Maven — build lifecycle, POM, manifest, testing, dependency management, multi-release JARs, modules, plugin authoring; Gradle — tasks, scripts, plugins, work avoidance, dependencies, Kotlin DSL, testing, static analysis, modules) · [Maven — Introduction to the Dependency Mechanism](https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html) · [Baeldung — Maven vs Gradle](https://www.baeldung.com/ant-maven-gradle)
 
 ### Python: pip, uv, poetry, and the Packaging Ecosystem
 
@@ -1633,11 +1633,13 @@ This pattern insulates the public API from internal exception hierarchy changes 
 - Gjengset, J. (2022). *Rust for Rustaceans*. No Starch Press. Ch.5 pp. 67–84
 - Matthews, B. (2024). *Code Like a Pro in Rust*. Manning. Ch.2 pp. 11–42
 - Horstmann, C. (2024). *Core Java, Vol. I*, 13th ed. Pearson. Ch.4 pp. 55–68, Ch.12 pp. 150–166
-- Evans, B., Clark, J. & Verburg, M. (2022). *The Well-Grounded Java Developer*, 2nd ed. Manning. Ch.2 pp. 26–54
+- Evans, B., Clark, J. & Verburg, M. (2022). *The Well-Grounded Java Developer*, 2nd ed. Manning. Ch.2 pp. 26–54, Ch.11 pp. 345–399
 - Beckwith, M. (2024). *JVM Performance Engineering*. Addison-Wesley. Ch.3 pp. 69–97
 - Bloch, J. (2018). *Effective Java*, 3rd ed. Addison-Wesley. Ch.4 Items 15, 16, 24, 25 pp. 73–115
 - Slatkin, B. (2025). *Effective Python*, 3rd ed. Addison-Wesley. Ch.14 Items 116–125 pp. 575–626
 - Martelli, A. et al. (2023). *Python in a Nutshell*, 4th ed. O'Reilly. Ch.7 pp. 221–245
+- Beazley, D. (2021). *Python Distilled*. Addison-Wesley. Ch.8 pp. 225–245
+- Beazley, D. & Jones, B. (2013). *Python Cookbook*, 3rd ed. O'Reilly. Ch.10 pp. 397–435
 - Viafore, P. (2021). *Robust Python*. O'Reilly. Ch.16 pp. 225–241
 
 ### External Resources
