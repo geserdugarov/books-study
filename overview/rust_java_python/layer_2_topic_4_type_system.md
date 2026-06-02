@@ -375,7 +375,7 @@ public static <T extends Comparable<T>> T max(T a, T b) {
 
 Bridge methods are synthesized by the compiler to maintain polymorphism under erasure — when a generic class is extended with concrete types, the compiler generates bridge methods that perform the necessary casts.
 
-> **Sources:** Horstmann (2024) Ch.8 pp. 104–116 · Bloch (2018) Ch.5 pp. 117–155 · Naftalin & Wadler (2024) Ch.1–3, Ch.5 · [JLS — Types, Values, Variables](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html) · [Oracle — Generics](https://docs.oracle.com/javase/tutorial/java/generics/index.html) · [Angelika Langer — Java Generics FAQ](http://www.angelikalanger.com/GenericsFAQ/JavaGenericsFAQ.html)
+> **Sources:** Horstmann (2024) Ch.8 pp. 104–116 · Bloch (2018) Ch.5 pp. 117–155 · Naftalin & Wadler (2024) Ch.1–3 · [JLS — Types, Values, Variables](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html) · [Oracle — Generics](https://docs.oracle.com/javase/tutorial/java/generics/index.html) · [Angelika Langer — Java Generics FAQ](http://www.angelikalanger.com/GenericsFAQ/JavaGenericsFAQ.html)
 
 ### Python: TypeVar and Generic
 
@@ -1067,7 +1067,7 @@ class Name implements Comparable<Name> {
 
 The current preview-track JEPs are **JEP 401 — Value Classes and Objects** and **JEP 402 — Enhanced Primitive Boxing**, with **JEP 218 — Generics over Primitive Types** tracking the longer-term specialization story. Until specialization ships, primitive type arguments are still boxed at generic boundaries, so the practical "no `List<int>`" limitation remains.
 
-> **Sources:** Horstmann (2024) Ch.8 pp. 110–116 · Bloch (2018) Ch.5 pp. 140–155 · Naftalin & Wadler (2024) Ch.5–6 · [JLS — Type Erasure](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.6) · [JLS — Intersection Types](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.9) · [JEP 218 — Generics over Primitive Types](https://openjdk.org/jeps/218)
+> **Sources:** Horstmann (2024) Ch.8 pp. 110–116 · Bloch (2018) Ch.5 pp. 140–155 · [JLS — Type Erasure](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.6) · [JLS — Intersection Types](https://docs.oracle.com/javase/specs/jls/se21/html/jls-4.html#jls-4.9) · [JEP 218 — Generics over Primitive Types](https://openjdk.org/jeps/218)
 
 ### Python: TypedDict, @overload, Variance, ParamSpec
 
@@ -1355,7 +1355,7 @@ The modern trend across all languages moves toward Rust's approach — making ab
 | Bloch (2018) — *Effective Java* | Ch.5 pp. 117–155, Ch.6 pp. 157–191, Item 61 | `books/Java/Bloch 2018 Effective Java.pdf` |
 | Evans (2022) — *The Well-Grounded Java Developer* | Ch.1 pp. 3–25, Ch.3 pp. 55–77 | `books/Java/Evans 2022 The well-grounded Java developer.pdf` |
 | Valeev (2024) — *100 Java Mistakes* | Ch.2 pp. 19–60, Ch.4 pp. 96–123, Ch.5 pp. 124–154, Ch.7 pp. 177–212 | `books/Java/Valeev 2024 100 Java mistakes.pdf` |
-| Naftalin & Wadler (2024) — *Java Generics and Collections* | Ch.1–3, Ch.5–6 | `books/Java/Naftalin Wadler 2024 Java generics and collections.pdf` |
+| Naftalin & Wadler (2024) — *Java Generics and Collections* | Ch.1–3 | `books/Java/Naftalin Wadler 2024 Java generics and collections.pdf` |
 | Martelli et al (2023) — *Python in a Nutshell* | Ch.3 pp. 33–113, Ch.4 pp. 115–169, Ch.5 pp. 171–194 | `books/Python/Martelli 2023 Python in a nutshell.pdf` |
 | Ramalho (2022) — *Fluent Python* | Ch.1 pp. 3–20, Ch.2 pp. 21–76, Ch.3 pp. 77–116, Ch.4 pp. 117–162, Ch.5 pp. 163–200, Ch.6 pp. 201–228, Ch.8 pp. 253–302, Ch.13 pp. 431–486, Ch.15 pp. 519–560, Ch.16 pp. 561–590 | `books/Python/Ramalho 2022 Fluent Python.pdf` |
 | Gorelick & Ozsvald (2020) — *High Performance Python* | Ch.3 pp. 65–77 | `books/Python/Gorelick Ozsvald 2020 High performance Python.pdf` |
