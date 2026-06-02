@@ -48,7 +48,7 @@ pub fn split_at_mut(values: &mut [i32], mid: usize) -> (&mut [i32], &mut [i32]) 
 
 Contrast with C/C++ where everything is "unsafe" — there is no compiler-enforced boundary between safe and unsafe operations.
 
-> **Sources:** Klabnik & Nichols (2023) Ch.19 pp. 419–437 · Gjengset (2022) Ch.9 pp. 141–148 · [Rustonomicon — "Meet Safe and Unsafe"](https://doc.rust-lang.org/nomicon/meet-safe-and-unsafe.html) · [Rustonomicon — "How Safe and Unsafe Interact"](https://doc.rust-lang.org/nomicon/safe-unsafe-meaning.html) · [Rustonomicon — "What Unsafe Can Do"](https://doc.rust-lang.org/nomicon/what-unsafe-does.html) · [Rust Reference — "Unsafety"](https://doc.rust-lang.org/reference/unsafety.html)
+> **Sources:** Klabnik & Nichols (2023) Ch.19 §"Unsafe Rust" pp. 420–429 · Gjengset (2022) Ch.9 pp. 141–148 · [Rustonomicon — "Meet Safe and Unsafe"](https://doc.rust-lang.org/nomicon/meet-safe-and-unsafe.html) · [Rustonomicon — "How Safe and Unsafe Interact"](https://doc.rust-lang.org/nomicon/safe-unsafe-meaning.html) · [Rustonomicon — "What Unsafe Can Do"](https://doc.rust-lang.org/nomicon/what-unsafe-does.html) · [Rust Reference — "Unsafety"](https://doc.rust-lang.org/reference/unsafety.html)
 
 ### Java: The Evolution of Low-Level Access
 
@@ -81,7 +81,7 @@ MyClass obj = (MyClass) unsafe.allocateInstance(MyClass.class);
 
 The philosophical difference from Rust: Java's "unsafe" was never a language feature — it was an implementation leak that the platform is now systematically replacing with sanctioned alternatives.
 
-> **Sources:** Evans & Gough (2024) Ch.13 pp. 348–355 · Evans & Gough (2024) Ch.7 pp. 177–179 · [JEP 471 — Deprecate sun.misc.Unsafe Memory-Access Methods](https://openjdk.org/jeps/471) · [Baeldung — Guide to sun.misc.Unsafe](https://www.baeldung.com/java-unsafe)
+> **Sources:** Evans (2022) Ch.17 §§17.6–17.7 (within pp. 571–607) · Evans & Gough (2024) Ch.13 pp. 348–355 · Evans & Gough (2024) Ch.7 pp. 177–179 · [JEP 471 — Deprecate sun.misc.Unsafe Memory-Access Methods](https://openjdk.org/jeps/471) · [Baeldung — Guide to sun.misc.Unsafe](https://www.baeldung.com/java-unsafe)
 
 ### Python: Crossing the C Boundary
 
@@ -107,7 +107,7 @@ The critical discipline: every C function that receives a Python object must man
 
 The practical consequence: bugs in C extensions cause segfaults, memory leaks, and corruption rather than Python exceptions.
 
-> **Sources:** Shaw (2020) pp. 285–315 · Gorelick & Ozsvald (2020) Ch.7 pp. 161–168 · [Python docs — Extending Python with C or C++](https://docs.python.org/3/extending/extending.html) · [Python docs — Python/C API Reference Manual](https://docs.python.org/3/c-api/index.html)
+> **Sources:** Shaw (2020) pp. 285–295 · Shaw (2020) pp. 202–209 (Reference Counting) · Gorelick & Ozsvald (2020) Ch.7 pp. 161–168 · [Python docs — Extending Python with C or C++](https://docs.python.org/3/extending/extending.html) · [Python docs — Python/C API Reference Manual](https://docs.python.org/3/c-api/index.html)
 
 ### Cross-Language Comparison
 
@@ -182,7 +182,7 @@ let reference: &i32 = unsafe { &*ptr };
 let opt_ref: Option<&i32> = unsafe { ptr.as_ref() };  // returns None for null
 ```
 
-> **Sources:** Klabnik & Nichols (2023) Ch.19 pp. 425–437 · Blandy & Orendorff (2017) Ch.21 pp. 525–555 · McNamara (2021) Ch.6 pp. 175–196 · [Rust docs — `std::ptr`](https://doc.rust-lang.org/std/ptr/index.html) · [Rust docs — `NonNull`](https://doc.rust-lang.org/std/ptr/struct.NonNull.html)
+> **Sources:** Klabnik & Nichols (2023) Ch.19 pp. 421–423 (raw pointer dereferencing) · Blandy & Orendorff (2017) Ch.21 pp. 525–555 · McNamara (2021) Ch.6 pp. 175–196 · [Rust docs — `std::ptr`](https://doc.rust-lang.org/std/ptr/index.html) · [Rust docs — `NonNull`](https://doc.rust-lang.org/std/ptr/struct.NonNull.html)
 
 ### Calling Unsafe Functions and Implementing Unsafe Traits
 
@@ -222,7 +222,7 @@ fn increment() {
 }
 ```
 
-> **Sources:** Klabnik & Nichols (2023) Ch.19 pp. 425–437 · Gjengset (2022) Ch.9 pp. 141–148
+> **Sources:** Klabnik & Nichols (2023) Ch.19 pp. 423–429 (unsafe functions, mutable statics, unsafe traits, union fields) · Gjengset (2022) Ch.9 pp. 141–148
 
 ### Undefined Behavior
 
@@ -241,7 +241,7 @@ The comprehensive (but non-exhaustive) list of UB:
 
 Note: deadlocks, memory leaks, and integer overflow are explicitly **not** UB — they are "safe" behaviors (impractical to prevent statically).
 
-> **Sources:** Gjengset (2022) Ch.9 pp. 148–159 · [Rust Reference — "Behavior considered undefined"](https://doc.rust-lang.org/reference/behavior-considered-undefined.html) · [Rustonomicon — "Working with Unsafe"](https://doc.rust-lang.org/nomicon/working-with-unsafe.html)
+> **Sources:** Gjengset (2022) Ch.9 pp. 148–162 (validity, casting, the drop check) · [Rust Reference — "Behavior considered undefined"](https://doc.rust-lang.org/reference/behavior-considered-undefined.html) · [Rustonomicon — "Working with Unsafe"](https://doc.rust-lang.org/nomicon/working-with-unsafe.html)
 
 ### Aliasing Rules
 
@@ -272,7 +272,7 @@ impl<T> MyCell<T> {
 }
 ```
 
-> **Sources:** Bos (2023) Ch.1 pp. 32–33 · Gjengset (2022) Ch.9 pp. 155–158 · [Rustonomicon — "Aliasing"](https://doc.rust-lang.org/nomicon/aliasing.html) · [Rust docs — `UnsafeCell`](https://doc.rust-lang.org/std/cell/struct.UnsafeCell.html)
+> **Sources:** Bos (2023) Ch.1 pp. 13–16 (Interior Mutability — Cell/RefCell/Mutex/UnsafeCell) · Gjengset (2022) Ch.9 pp. 155–158 · [Rustonomicon — "Aliasing"](https://doc.rust-lang.org/nomicon/aliasing.html) · [Rust docs — `UnsafeCell`](https://doc.rust-lang.org/std/cell/struct.UnsafeCell.html)
 
 ---
 
@@ -314,7 +314,7 @@ impl<'a, T> RefWithFlag<'a, T> {
 
 Both examples follow the core pattern: unsafe implementation, safe public API, documented safety invariants.
 
-> **Sources:** Blandy & Orendorff (2017) Ch.21 pp. 555–575
+> **Sources:** Blandy & Orendorff (2017) Ch.21 pp. 541–556 (RefWithFlag p. 541, GapBuffer p. 550, Panic Safety in Unsafe Code p. 556)
 
 ### PhantomData, Drop Check, Send and Sync
 
@@ -350,7 +350,7 @@ unsafe impl Send for MyBox {}
 unsafe impl Sync for MyBox {}
 ```
 
-> **Sources:** Gjengset (2022) Ch.9 pp. 155–159 · [Rustonomicon — "PhantomData"](https://doc.rust-lang.org/nomicon/phantom-data.html) · [Rustonomicon — "Dropck"](https://doc.rust-lang.org/nomicon/dropck.html) · [Rustonomicon — "Send and Sync"](https://doc.rust-lang.org/nomicon/send-and-sync.html)
+> **Sources:** Gjengset (2022) Ch.9 pp. 155–162 (validity, casting, the drop check) · [Rustonomicon — "PhantomData"](https://doc.rust-lang.org/nomicon/phantom-data.html) · [Rustonomicon — "Dropck"](https://doc.rust-lang.org/nomicon/dropck.html) · [Rustonomicon — "Send and Sync"](https://doc.rust-lang.org/nomicon/send-and-sync.html)
 
 ### no_std and Bare-Metal Unsafe
 
@@ -380,7 +380,7 @@ fn panic(_info: &core::panic::PanicInfo) -> ! {
 
 The pattern for hardware abstraction: define typed wrappers around memory-mapped registers, use volatile operations internally, expose a safe API that prevents misuse (e.g., writing to read-only registers).
 
-> **Sources:** Gjengset (2022) Ch.12 pp. 211–222 · McNamara (2021) Ch.11 pp. 365–387
+> **Sources:** Gjengset (2022) Ch.12 pp. 211–222 · McNamara (2021) Ch.11 pp. 365–387 · Matthews (2024) Ch.5 §5.8 pp. 110–117 (custom `Allocator` over libc `malloc`/`free`; protected-memory allocator via `mprotect`/`mlock`)
 
 ### Tools for Verifying Unsafe Code
 
@@ -416,7 +416,7 @@ Key capabilities:
 
 The dangers: no type checking, no bounds checking, no access control on field access. Wrong offset = heap corruption = JVM crash. JEP 471 (JDK 23) deprecated the memory-access methods for removal. Non-memory methods (`allocateInstance`, `throwException`) are not affected by this JEP.
 
-> **Sources:** Evans & Gough (2024) Ch.13 pp. 348–355 · Beckwith (2024) Ch.7 pp. 219–270 · [JEP 471](https://openjdk.org/jeps/471) · [Baeldung — Guide to sun.misc.Unsafe](https://www.baeldung.com/java-unsafe)
+> **Sources:** Evans (2022) Ch.17 §17.6 "The Unsafe API" + §17.7 "Replacing Unsafe" (within pp. 571–607) · Evans & Gough (2024) Ch.13 pp. 348–355 · Goetz (2006) Ch.15 pp. 319–336 (Atomic Variables and Nonblocking Synchronization — the CAS foundation historically built on `Unsafe`) · [JEP 471](https://openjdk.org/jeps/471) · [Baeldung — Guide to sun.misc.Unsafe](https://www.baeldung.com/java-unsafe)
 
 ### VarHandle — The Sanctioned Replacement (Java 9+)
 
@@ -522,7 +522,7 @@ Key safety guarantees:
 
 The **jextract** tool automatically generates Java binding classes from C header files, eliminating manual FunctionDescriptor/MethodHandle boilerplate.
 
-> **Sources:** Horstmann (2024) Ch.13 · Evans & Gough (2024) Ch.15 pp. 412–414 · [JEP 454 — Foreign Function & Memory API](https://openjdk.org/jeps/454) · [Baeldung — Guide to Java Project Panama](https://www.baeldung.com/java-project-panama) · [Java docs — `java.lang.foreign`](https://docs.oracle.com/en/java/javase/22/docs/api/java.base/java/lang/foreign/package-summary.html)
+> **Sources:** Horstmann (2024) Ch.13 (esp. §13.11 "Foreign Functions: A Glimpse into the Future") · Evans & Gough (2024) Ch.15 pp. 412–414 · Rahman (2025) Ch.2 §"Native Method Invocation and Pinning" pp. 67–70 (JDK 22 FFM downcall — `Arena.ofConfined()` + `SymbolLookup.libraryLookup` + `MemorySegment` + `Linker.nativeLinker()` + `FunctionDescriptor.of(...)`) · Oaks (2020) Ch.8 pp. 249–265 (Native Memory Best Practices — the pre-Panama operational baseline) · [JEP 454 — Foreign Function & Memory API](https://openjdk.org/jeps/454) · [Baeldung — Guide to Java Project Panama](https://www.baeldung.com/java-project-panama) · [Java docs — `java.lang.foreign`](https://docs.oracle.com/en/java/javase/22/docs/api/java.base/java/lang/foreign/package-summary.html)
 
 ### Comparison: Rust unsafe vs Java Low-Level APIs
 
@@ -571,7 +571,7 @@ Py_SETREF(dst, src); // safe replacement: DECREF old, assign new (Python 3.6+)
 
 Warning: `Py_DECREF` can invoke arbitrary Python code via `__del__`, which may modify data structures the caller is iterating over.
 
-> **Sources:** Shaw (2020) pp. 177–219 · [Python docs — Reference Counting](https://docs.python.org/3/c-api/refcounting.html)
+> **Sources:** Shaw (2020) pp. 177–195 (CPython memory allocator design — raw, PyMem, object domains) · Shaw (2020) pp. 202–209 (Reference Counting mechanics) · Shaw (2020) pp. 209–219 (cyclic garbage collector) · [Python docs — Reference Counting](https://docs.python.org/3/c-api/refcounting.html)
 
 ### Writing C Extension Modules
 
@@ -645,7 +645,7 @@ PyObject *capsule = PyCapsule_New(my_c_struct, "mymod.MyStruct", destructor_fn);
 MyStruct *ptr = PyCapsule_GetPointer(capsule, "mymod.MyStruct");
 ```
 
-> **Sources:** Beazley & Jones (2013) Ch.15 pp. 597–663 · Shaw (2020) pp. 364–369 · [Python docs — Extending Python with C or C++](https://docs.python.org/3/extending/extending.html)
+> **Sources:** Beazley & Jones (2013) Ch.15 Recipes 15.2 pp. 605–608 (simple C extension), 15.3 pp. 609–611 (extension functions on arrays), 15.4 pp. 612–613 (opaque pointers), 15.5 pp. 614–618 (defining/exporting C APIs), 15.7 p. 625 (releasing the GIL) · Shaw (2020) pp. 364–369 · [Python docs — Extending Python with C or C++](https://docs.python.org/3/extending/extending.html)
 
 ### Buffer Protocol and memoryview
 
@@ -702,7 +702,7 @@ print(mv.strides)          # (8, 4) — row-major
 
 This is Python's closest analogue to Rust's slice (`&[T]`) — a non-owning view into contiguous memory.
 
-> **Sources:** Ramalho (2022) Ch.2 pp. 67–71 · [PEP 3118 — Revising the Buffer Protocol](https://peps.python.org/pep-3118/) · [Python docs — Buffer Protocol](https://docs.python.org/3/c-api/buffer.html) · [Python docs — memoryview](https://docs.python.org/3/library/stdtypes.html#memoryview)
+> **Sources:** Ramalho (2022) Ch.2 pp. 67–71 (memoryview as a shared-memory sequence type) · Slatkin (2025) Ch.11 Item 99 pp. 485–491 ("Consider memoryview and bytearray for Zero-Copy Interactions with bytes") · [PEP 3118 — Revising the Buffer Protocol](https://peps.python.org/pep-3118/) · [Python docs — Buffer Protocol](https://docs.python.org/3/c-api/buffer.html) · [Python docs — memoryview](https://docs.python.org/3/library/stdtypes.html#memoryview)
 
 ### ctypes and cffi — Calling Native Code Without Writing C
 
@@ -882,7 +882,7 @@ Operand types: `in(reg)`, `out(reg)`, `inout(reg)`, `lateout(reg)` (allows input
 
 `global_asm!` allows defining entire functions in assembly (for boot code, ISR trampolines). `naked_asm!` is used in `#[naked]` functions (no prologue/epilogue).
 
-> **Sources:** Matthews (2024) Ch.11 pp. 219–231 · [Rust Reference — Inline Assembly](https://doc.rust-lang.org/reference/inline-assembly.html) · [Rust By Example — Inline Assembly](https://doc.rust-lang.org/rust-by-example/unsafe/asm.html) · [Rust RFC 2873](https://rust-lang.github.io/rfcs/2873-inline-asm.html)
+> **Sources:** McNamara (2021) Ch.12 §12.3 "Software interrupts" pp. ~395–400 — *pre-stabilization* (`#![feature(asm)]`, Rust 1.50 era; the stabilized 1.59+ syntax below comes from the online refs) · [Rust Reference — Inline Assembly](https://doc.rust-lang.org/reference/inline-assembly.html) · [Rust By Example — Inline Assembly](https://doc.rust-lang.org/rust-by-example/unsafe/asm.html) · [Rust RFC 2873](https://rust-lang.github.io/rfcs/2873-inline-asm.html)
 
 ### SIMD Across Languages
 

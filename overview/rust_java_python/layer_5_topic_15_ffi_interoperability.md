@@ -35,7 +35,7 @@ Key concepts:
 - **Implicit `unsafe`** — every `extern "C" { fn ... }` declaration is implicitly `unsafe`. The Rust compiler cannot verify that the foreign function exists or is correctly declared.
 - **ABI strings** — Rust supports multiple ABI strings: `"C"` (platform C ABI), `"system"` (platform default, `stdcall` on Windows), `"C-unwind"` (C ABI allowing unwinding across the boundary).
 
-> **Sources:** Gjengset (2022) Ch.11 pp. 193–200 · Klabnik & Nichols (2023) Ch.19 pp. 430–435 · [The Rust Reference — Extern function qualifier](https://doc.rust-lang.org/reference/items/external-blocks.html) · [The Rust Reference — ABI strings](https://doc.rust-lang.org/reference/items/external-blocks.html#abi) · [The Rust Reference — `#[repr(C)]`](https://doc.rust-lang.org/reference/type-layout.html#the-c-representation) · [The Rustonomicon — FFI](https://doc.rust-lang.org/nomicon/ffi.html)
+> **Sources:** Gjengset (2022) Ch.11 pp. 193–200 · Klabnik & Nichols (2023) Ch.19 pp. 423–427 ("Using extern Functions to Call External Code") · Matthews (2024) Ch.4 §"FFI compatibility" (within pp. 65–91) · [The Rust Reference — Extern function qualifier](https://doc.rust-lang.org/reference/items/external-blocks.html) · [The Rust Reference — ABI strings](https://doc.rust-lang.org/reference/items/external-blocks.html#abi) · [The Rust Reference — `#[repr(C)]`](https://doc.rust-lang.org/reference/type-layout.html#the-c-representation) · [The Rustonomicon — FFI](https://doc.rust-lang.org/nomicon/ffi.html)
 
 ### Java: JNI's Native Bridge and Panama's Paradigm Shift
 
@@ -102,7 +102,7 @@ public class PanamaDemo {
 }
 ```
 
-> **Sources:** Horstmann (2024) Ch.13 pp. 343–350 · Evans (2022) Ch.17 pp. 615–622 · [JEP 454 — Foreign Function & Memory API](https://openjdk.org/jeps/454) · [Oracle JNI Specification](https://docs.oracle.com/en/java/javase/21/docs/specs/jni/index.html) · [Oracle JNI Design Overview](https://docs.oracle.com/en/java/javase/21/docs/specs/jni/design.html)
+> **Sources:** Horstmann (2024) Ch.13 pp. 343–350 · Evans (2022) Ch.18 §18.2 "Project Panama" (within pp. 609–638) · Rahman (2025) Ch.2 §"Native Method Invocation and Pinning" pp. 67–70 (JDK 22 FFM downcall example) · Beckwith (2024) Ch.9 pp. 307–336 (Panama as JNI replacement — memory-management mismatch / overhead / complexity contrasts) · [JEP 454 — Foreign Function & Memory API](https://openjdk.org/jeps/454) · [Oracle JNI Specification](https://docs.oracle.com/en/java/javase/21/docs/specs/jni/index.html) · [Oracle JNI Design Overview](https://docs.oracle.com/en/java/javase/21/docs/specs/jni/design.html)
 
 ### Python: Dynamic FFI via `ctypes` and `cffi`
 
@@ -139,9 +139,13 @@ libm = ffi.dlopen("libm.so.6")
 print(f"sqrt(2.0) = {libm.sqrt(2.0)}")
 ```
 
-Key difference: `ctypes` per-call overhead is ~1-2 microseconds due to Python object marshalling. `cffi` in API mode (compiled) is 10-100x faster for tight loops. Both operate at the ABI level (call functions by their compiled symbol), not the API level (do not parse C headers).
+Key difference: `ctypes` per-call overhead is ~1-2 microseconds due to Python object marshalling. `cffi` in API mode (compiled) is 10-100x faster for tight loops. The three approaches differ in how they meet the C declarations they call:
 
-> **Sources:** Slatkin (2025) Item 95 pp. 447–462 · Gorelick & Ozsvald (2020) Ch.7 pp. 182–190 · [Python docs — `ctypes`](https://docs.python.org/3/library/ctypes.html) · [Python docs — Extending Python with C or C++](https://docs.python.org/3/extending/extending.html) · [`cffi` documentation](https://cffi.readthedocs.io/en/stable/)
+- **`ctypes`** is purely ABI-level — it calls functions by compiled symbol and never parses any C; the developer hand-translates every signature into `argtypes`/`restype`.
+- **`cffi` ABI mode** still binds to compiled symbols (like `ctypes`), but understands the C declarations you give it through `ffi.cdef(...)` — closer to the C API in expression, still resolved at the ABI boundary.
+- **`cffi` API mode** goes further: `ffi.set_source(...)` compiles a real C extension against the declarations (and any `#include`-d header context), so the binding is verified by the C compiler and operates at the C-API level.
+
+> **Sources:** Slatkin (2025) Ch.11 Item 95 pp. 462–466 (`ctypes`) · Gorelick & Ozsvald (2020) Ch.7 pp. 197–203 (FFI: intro p. 197, `ctypes` pp. 199–200, `cffi` pp. 201–203) · Martelli et al. (2023) Ch.25 pp. 659–660 (modern Python-FFI tool landscape: C API, ctypes, CFFI, F2PY, SIP, CLIF, cppyy, pybind11, Cython, HPy) · [Python docs — `ctypes`](https://docs.python.org/3/library/ctypes.html) · [Python docs — Extending Python with C or C++](https://docs.python.org/3/extending/extending.html) · [`cffi` documentation](https://cffi.readthedocs.io/en/stable/)
 
 ### Cross-Language Comparison
 
@@ -210,9 +214,9 @@ fn safe_strlen(s: &str) -> usize {
 }
 ```
 
-Blandy's `libgit2` example demonstrates the full pattern: `bindgen` generates raw bindings, then a safe Rust wrapper provides an idiomatic API with proper error handling and RAII resource management.
+Blandy's `libgit2` example demonstrates the full pattern *without* `bindgen`: the raw `extern` blocks and `#[repr(C)]` types are written by hand from the C headers (the book explicitly notes it does not have space to show `bindgen` in action and points readers to the crate's docs), and a safe Rust wrapper is then layered on top to provide an idiomatic API with proper error handling and RAII resource management. The `bindgen` automatic-generation path is covered in Gjengset Ch.11 instead.
 
-> **Sources:** Gjengset (2022) Ch.11 pp. 200–209 · Blandy & Orendorff (2017) Ch.21 pp. 483–495 · McNamara (2021) Ch.9 pp. 305–327 · [`bindgen` User Guide](https://rust-lang.github.io/rust-bindgen/) · [Cargo reference — Build Scripts](https://doc.rust-lang.org/cargo/reference/build-scripts.html) · [`cc` crate](https://docs.rs/cc/latest/cc/)
+> **Sources:** Gjengset (2022) Ch.11 pp. 200–209 · Blandy & Orendorff (2017) Ch.21 pp. 557–571 (raw libgit2 bindings — hand-written `extern` blocks, the book points to `bindgen` docs for the automated path) · McNamara (2021) Ch.9 pp. 305–327 · [`bindgen` User Guide](https://rust-lang.github.io/rust-bindgen/) · [Cargo reference — Build Scripts](https://doc.rust-lang.org/cargo/reference/build-scripts.html) · [`cc` crate](https://docs.rs/cc/latest/cc/)
 
 ### Java: JNI Parameter Passing and Type Mappings
 
@@ -249,7 +253,7 @@ JNI references come in three flavors:
 
 Error handling is manual: C code must call `(*env)->ExceptionCheck(env)` after JNI operations to detect Java exceptions, and cannot use C exception mechanisms to propagate them.
 
-> **Sources:** Horstmann (2024) Ch.13 pp. 350–370 · [Oracle JNI tutorial](https://docs.oracle.com/en/java/javase/21/docs/specs/jni/intro.html) · [JNA GitHub repository](https://github.com/java-native-access/jna) · [JNR-FFI GitHub repository](https://github.com/jnr/jnr-ffi)
+> **Sources:** Horstmann (2024) Ch.13 pp. 350–370 · Oaks (2020) Ch.12 §"Java Native Interface" (within pp. 363–411) — measured JNI per-call overhead, parameter-marshalling cost, reference management as a performance tax · [Oracle JNI tutorial](https://docs.oracle.com/en/java/javase/21/docs/specs/jni/intro.html) · [JNA GitHub repository](https://github.com/java-native-access/jna) · [JNR-FFI GitHub repository](https://github.com/jnr/jnr-ffi)
 
 ### Python: `ctypes` and `cffi` in Depth
 
@@ -303,7 +307,7 @@ from _sqrt_cffi import ffi, lib
 print(lib.sqrt(2.0))
 ```
 
-> **Sources:** Slatkin (2025) Item 95 pp. 447–462 · Gorelick & Ozsvald (2020) Ch.7 pp. 161–190 · [Python docs — `ctypes` tutorial](https://docs.python.org/3/library/ctypes.html#ctypes-tutorial) · [`cffi` documentation](https://cffi.readthedocs.io/en/stable/) · [`cffi` GitHub repository](https://github.com/python-cffi/cffi)
+> **Sources:** Slatkin (2025) Ch.11 Item 95 pp. 462–466 (`ctypes` tutorial) · Gorelick & Ozsvald (2020) Ch.7 §"Foreign Function Interfaces" pp. 197–206 (`ctypes` pp. 199–200, `cffi` pp. 201–203, `f2py` pp. 204–206) · Beazley & Jones (2013) Ch.15 Recipe 15.1 pp. 599–604 (ctypes) · [Python docs — `ctypes` tutorial](https://docs.python.org/3/library/ctypes.html#ctypes-tutorial) · [`cffi` documentation](https://cffi.readthedocs.io/en/stable/) · [`cffi` GitHub repository](https://github.com/python-cffi/cffi)
 
 ### Comparison: The C Binding Generation Spectrum
 
@@ -403,7 +407,7 @@ public class PanamaStrlen {
 
 Panama's key advantages over JNI: no C code needed, full type safety in Java, structured memory lifecycle via `Arena`, and comparable performance. Over JNA: `MethodHandle`-based calls are JIT-optimizable, approaching JNI performance without the boilerplate.
 
-> **Sources:** Evans (2022) Ch.17 pp. 622–639 · [JEP 454 — Foreign Function & Memory API](https://openjdk.org/jeps/454) · [`jextract` GitHub](https://github.com/openjdk/jextract) · [Oracle — Foreign Function & Memory API Programmer's Guide](https://docs.oracle.com/en/java/javase/22/core/foreign-function-and-memory-api.html)
+> **Sources:** Evans (2022) Ch.18 §18.2 "Project Panama" (within pp. 609–638) — incubator-era `MemorySegment`/`MemoryAddress`/`SegmentAllocator`/`ResourceScope`/`CLinker.toCString` + `jextract` libspng walkthrough · Rahman (2025) Ch.2 §"Native Method Invocation and Pinning" pp. 67–70 — finalized JDK 22 `Arena.ofConfined()` + `SymbolLookup.libraryLookup` + `Linker.nativeLinker().downcallHandle` + `FunctionDescriptor.of(...)` downcall to a C `addNumbers` · Beckwith (2024) Ch.9 pp. 327–333 ("Project Panama: A New Horizon" — JNI memory-management mismatch vs FFM) · [JEP 454 — Foreign Function & Memory API](https://openjdk.org/jeps/454) · [`jextract` GitHub](https://github.com/openjdk/jextract) · [Oracle — Foreign Function & Memory API Programmer's Guide](https://docs.oracle.com/en/java/javase/22/core/foreign-function-and-memory-api.html)
 
 ### Python: pybind11 and Cython
 
@@ -451,7 +455,7 @@ def integrate_f(double a, double b, int N):
 
 The choice between them: pybind11 is better for wrapping existing C++ libraries (write the binding in C++); Cython is better for accelerating Python code (write in Python-like syntax) or wrapping C libraries. Both produce CPython extension modules (`.so`/`.pyd` files).
 
-> **Sources:** Slatkin (2025) Item 96 pp. 462–492 · Gorelick & Ozsvald (2020) Ch.7 pp. 163–180 · [pybind11 documentation](https://pybind11.readthedocs.io/en/stable/) · [pybind11 GitHub](https://github.com/pybind/pybind11) · [Cython documentation](https://cython.readthedocs.io/en/stable/) · [Cython GitHub](https://github.com/cython/cython)
+> **Sources:** Slatkin (2025) Ch.11 Item 96 pp. 467–474 (extension modules: C API, Cython, pybind11) · Gorelick & Ozsvald (2020) Ch.7 §"Cython" pp. 167–179 (pure Python mode, type annotations, `cdef`/`cpdef`, typed memoryviews, OpenMP/`nogil`) · Beazley & Jones (2013) Ch.15 Recipes 15.10–15.11 pp. 632–642 (wrapping C with Cython) · [pybind11 documentation](https://pybind11.readthedocs.io/en/stable/) · [pybind11 GitHub](https://github.com/pybind/pybind11) · [Cython documentation](https://cython.readthedocs.io/en/stable/) · [Cython GitHub](https://github.com/cython/cython)
 
 ### Comparison: Modern FFI Evolution
 
@@ -520,7 +524,7 @@ Key constraints:
 - Resource management must use explicit `create`/`destroy` function pairs (foreign callers cannot invoke Rust's `Drop`)
 - Panics must be caught with `std::panic::catch_unwind()` — unwinding across FFI is undefined behavior
 
-> **Sources:** Klabnik & Nichols (2023) Ch.19 pp. 435–438 · Matthews (2024) Ch.2 pp. 17–42, Ch.8 pp. 151–158 · [The Rustonomicon — Calling Rust from C](https://doc.rust-lang.org/nomicon/ffi.html#calling-rust-code-from-c) · [Rust Reference — `#[no_mangle]`](https://doc.rust-lang.org/reference/abi.html#the-no_mangle-attribute) · [Cargo reference — Library crate types](https://doc.rust-lang.org/reference/linkage.html)
+> **Sources:** Klabnik & Nichols (2023) Ch.19 pp. 423–427 (calling Rust functions from other languages, `#[no_mangle]`, `extern "C"`) · Matthews (2024) Ch.2 pp. 11–42 (Linking to C libraries; cross-compilation/static linking) · Matthews (2024) Ch.4 §"FFI compatibility" (within pp. 65–91) · Matthews (2024) Ch.11 pp. 219–231 (exposing Rust as a shared library) · [The Rustonomicon — Calling Rust from C](https://doc.rust-lang.org/nomicon/ffi.html#calling-rust-code-from-c) · [Rust Reference — `#[no_mangle]`](https://doc.rust-lang.org/reference/abi.html#the-no_mangle-attribute) · [Cargo reference — Library crate types](https://doc.rust-lang.org/reference/linkage.html)
 
 ### Java: The Invocation API and Embedding the JVM
 
@@ -617,7 +621,7 @@ int main() {
 
 PEP 384 defines the "Limited API" — a stable subset of the C API that is guaranteed across Python versions, enabling binary-compatible extensions. The full C API is unstable: extensions compiled against Python 3.11 may need recompilation for 3.12.
 
-> **Sources:** Shaw (2020) — CPython Internals · [Python docs — Python/C API Reference Manual](https://docs.python.org/3/c-api/index.html) · [Python docs — Building C and C++ Extensions](https://docs.python.org/3/extending/building.html) · [PEP 384 — Defining a Stable ABI](https://peps.python.org/pep-0384/)
+> **Sources:** Shaw (2020) pp. 285–315 (`PyObject` structure, variable-size objects, the `type` type) · Shaw (2020) pp. 202–209 (Reference Counting mechanics) · Shaw (2020) pp. 364–369 (Next Steps — writing C extensions for CPython) · [Python docs — Python/C API Reference Manual](https://docs.python.org/3/c-api/index.html) · [Python docs — Building C and C++ Extensions](https://docs.python.org/3/extending/building.html) · [PEP 384 — Defining a Stable ABI](https://peps.python.org/pep-0384/)
 
 ### Comparison: Exposability Spectrum
 
@@ -739,9 +743,9 @@ public class RustLib {
 }
 ```
 
-A critical concern: JNI calls (including via the `jni` crate) pin virtual threads to carrier threads (Rahman p. 44), meaning JNI-heavy workloads can starve virtual thread scheduling. As Java's ecosystem shifts to Panama, the role of Rust-Java JNI interop may diminish.
+A critical concern: JNI calls (including via the `jni` crate) pin virtual threads to carrier threads (Rahman Ch.2 §"Native Method Invocation and Pinning" pp. 67–70), meaning JNI-heavy workloads can starve virtual thread scheduling. Mitigation strategies include batching across the boundary, async APIs, and pure-Java reimplementation. As Java's ecosystem shifts to Panama, the role of Rust-Java JNI interop may diminish.
 
-> **Sources:** Rahman (2025) p. 44 · [`jni` crate documentation](https://docs.rs/jni/latest/jni/) · [`jni` crate GitHub](https://github.com/jni-rs/jni-rs)
+> **Sources:** Rahman (2025) Ch.2 §"Native Method Invocation and Pinning" pp. 67–70 · [`jni` crate documentation](https://docs.rs/jni/latest/jni/) · [`jni` crate GitHub](https://github.com/jni-rs/jni-rs)
 
 ### Java-Python and Polyglot Runtimes: GraalVM
 
@@ -844,7 +848,7 @@ String ownership rules across FFI:
 - `CString::from_raw()` — reclaims ownership from C
 - The cardinal rule: whoever allocates must deallocate, using the same allocator
 
-> **Sources:** Gjengset (2022) Ch.11 pp. 200–205 · Blandy & Orendorff (2017) Ch.21 pp. 495–505 · [Rust docs — `std::ffi` module](https://doc.rust-lang.org/std/ffi/index.html)
+> **Sources:** Gjengset (2022) Ch.11 pp. 200–205 · Blandy & Orendorff (2017) Ch.21 pp. 572–583 (safe Rust wrapper around `libgit2`: raw pointers wrapped in Rust types with `Drop`) · Matthews (2024) Ch.5 §5.8 pp. 110–117 (custom allocators across the C ABI: §5.8.1 wrapping libc `malloc`/`free`, §5.8.2 protected-memory allocator via `mprotect`/`mlock`) · [Rust docs — `std::ffi` module](https://doc.rust-lang.org/std/ffi/index.html)
 
 ### Java: `MemorySegment`, `Arena`, and Panama Memory Management
 
@@ -889,7 +893,7 @@ public class PanamaMemory {
 
 For JNI, memory management was manual and error-prone: `GetByteArrayElements` might copy the array, `ReleaseByteArrayElements` with mode `0` copies back changes, mode `JNI_ABORT` discards changes. Panama's `Arena` pattern provides deterministic, scope-based lifecycle that is far harder to misuse.
 
-> **Sources:** Evans (2022) Ch.17 pp. 625–635 · [JEP 454 — `MemorySegment` and `Arena` API](https://openjdk.org/jeps/454) · [Java docs — `java.lang.foreign` package](https://docs.oracle.com/en/java/javase/22/docs/api/java.base/java/lang/foreign/package-summary.html)
+> **Sources:** Evans (2022) Ch.18 §18.2 "Project Panama" (within pp. 609–638) — `MemorySegment`, `MemoryAddress`, `SegmentAllocator`, `ResourceScope`/`newConfinedScope()`, `CLinker.toCString` · Rahman (2025) Ch.2 pp. 67–70 — finalized `Arena.ofConfined()`/`Linker.nativeLinker()` surface · Oaks (2020) Ch.8 pp. 249–265 (pre-Panama Native Memory Best Practices — NMT, large-page tuning) · [JEP 454 — `MemorySegment` and `Arena` API](https://openjdk.org/jeps/454) · [Java docs — `java.lang.foreign` package](https://docs.oracle.com/en/java/javase/22/docs/api/java.base/java/lang/foreign/package-summary.html)
 
 ### Python: Reference Counting Across the C Boundary and Buffer Protocol
 
@@ -934,7 +938,7 @@ view[2] = 99
 print(a[2])       # 99 — modification visible in the original
 ```
 
-> **Sources:** Shaw (2020) — CPython Internals · [Python docs — Buffer Protocol](https://docs.python.org/3/c-api/buffer.html) · [Python docs — `memoryview`](https://docs.python.org/3/library/stdtypes.html#memoryview) · [Python docs — Reference Counting](https://docs.python.org/3/c-api/refcounting.html)
+> **Sources:** Shaw (2020) pp. 202–209 (Reference Counting mechanics) · Shaw (2020) pp. 285–295 (`PyObject` structure) · [Python docs — Buffer Protocol](https://docs.python.org/3/c-api/buffer.html) · [Python docs — `memoryview`](https://docs.python.org/3/library/stdtypes.html#memoryview) · [Python docs — Reference Counting](https://docs.python.org/3/c-api/refcounting.html)
 
 ### Cross-Language Buffer Sharing: Apache Arrow
 
@@ -1014,7 +1018,7 @@ pub struct MyLibError(i32);
 
 These patterns collectively transform an unsafe C API into a safe Rust API — the safety cost is paid once (in the wrapper) and never again (by users).
 
-> **Sources:** Blandy & Orendorff (2017) Ch.21 pp. 495–505 · Matthews (2024) Ch.8 pp. 154–158 · [The Rustonomicon — FFI safety patterns](https://doc.rust-lang.org/nomicon/ffi.html) · [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/)
+> **Sources:** Blandy & Orendorff (2017) Ch.21 pp. 572–583 (safe `libgit2` wrapper) · Matthews (2024) Ch.4 §"FFI compatibility" (within pp. 65–91) · Matthews (2024) Ch.11 pp. 219–231 · [The Rustonomicon — FFI safety patterns](https://doc.rust-lang.org/nomicon/ffi.html) · [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/)
 
 ### Java: Safe FFI with Panama and JNI Error Patterns
 
@@ -1041,7 +1045,7 @@ Panama greatly simplifies safety: `MemorySegment` provides bounds-checked access
 
 Bloch's advice (Effective Java, Item 66) remains valid: use native methods only when pure Java cannot achieve the goal. FFI adds complexity, debugging difficulty, platform-specific bugs, and security risk. With modern Java performance (JIT, virtual threads, SIMD via Vector API), the performance motivation for native code is shrinking.
 
-> **Sources:** Horstmann (2024) Ch.13 pp. 370–375 · Bloch (2018) Item 66 p. 285 · [JEP 454 — safety and restricted operations](https://openjdk.org/jeps/454)
+> **Sources:** Horstmann (2024) Ch.13 pp. 370–375 · Bloch (2018) Item 66 p. 285 · Oaks (2020) Ch.12 §"Java Native Interface" (within pp. 363–411) — empirical JNI overhead backing Bloch's "use native methods judiciously" · [JEP 454 — safety and restricted operations](https://openjdk.org/jeps/454)
 
 ### Python: Reference Counting Discipline and GIL Management
 
@@ -1073,7 +1077,7 @@ static PyObject* long_computation(PyObject* self, PyObject* args) {
 
 PyO3 handles both automatically: `Python<'_>` token proves the GIL is held, and type conversions manage reference counts. This is the strongest argument for PyO3 over raw C extensions: it eliminates the two most dangerous categories of FFI bugs.
 
-> **Sources:** Gorelick & Ozsvald (2020) Ch.7 pp. 195–211 · [Python docs — Common Object Structures](https://docs.python.org/3/c-api/structures.html) · [Python docs — Reference Counting](https://docs.python.org/3/c-api/refcounting.html)
+> **Sources:** Gorelick & Ozsvald (2020) Ch.7 §"CPython Module" pp. 207–211 (`Py_INCREF`/`Py_DECREF` patterns, building modules, performance results) · Shaw (2020) pp. 202–209 (Reference Counting mechanics) · [Python docs — Common Object Structures](https://docs.python.org/3/c-api/structures.html) · [Python docs — Reference Counting](https://docs.python.org/3/c-api/refcounting.html)
 
 ### Performance: FFI Call Overhead
 
@@ -1214,17 +1218,21 @@ The meta-insight: FFI is just one point on the interop spectrum. As you move fro
 | Language | Book | Chapters |
 |----------|------|----------|
 | Rust | Gjengset (2022) — *Rust for Rustaceans* | Ch.11 pp. 193–209 |
-| Rust | Blandy & Orendorff (2017) — *Programming Rust* | Ch.21 pp. 483–505 |
+| Rust | Blandy & Orendorff (2017) — *Programming Rust* | Ch.21 pp. 557–583 (FFI section within Unsafe Code pp. 525–583) |
 | Rust | McNamara (2021) — *Rust in Action* | Ch.9 pp. 305–327, Ch.12 pp. 390–417 |
-| Rust | Klabnik & Nichols (2023) — *The Rust Programming Language* | Ch.19 pp. 419–458 |
-| Rust | Matthews (2024) — *Code Like a Pro in Rust* | Ch.2 pp. 17–42, Ch.8 pp. 151–158 |
+| Rust | Klabnik & Nichols (2023) — *The Rust Programming Language* | Ch.19 §"Unsafe Rust" pp. 420–429 (FFI subsection pp. 423–427) |
+| Rust | Matthews (2024) — *Code Like a Pro in Rust* | Ch.2 pp. 11–42, Ch.4 §"FFI compatibility" (within pp. 65–91), Ch.5 §5.8 pp. 110–117, Ch.11 pp. 219–231 |
 | Java | Horstmann (2024) — *Core Java II* | Ch.13 pp. 343–384 |
-| Java | Evans (2022) — *Well-Grounded Java Developer* | Ch.17 pp. 615–639 |
+| Java | Evans (2022) — *The Well-Grounded Java Developer* | Ch.18 §18.2 "Project Panama" (within pp. 609–638) |
 | Java | Bloch (2018) — *Effective Java* | Item 66 p. 285 |
-| Java | Rahman (2025) — *Modern Concurrency in Java* | p. 44 |
-| Python | Slatkin (2025) — *Effective Python* | Ch.11 pp. 447–492 |
+| Java | Rahman (2025) — *Modern Concurrency in Java* | Ch.2 §"Native Method Invocation and Pinning" pp. 67–70 |
+| Java | Oaks (2020) — *Java Performance* | Ch.12 §"Java Native Interface" (within pp. 363–411) |
+| Java | Beckwith (2024) — *JVM Performance Engineering* | Ch.9 pp. 307–336 (LWJGL/JNI vs FFM) |
+| Python | Slatkin (2025) — *Effective Python* | Ch.11 Item 95 pp. 462–466 (ctypes), Item 96 pp. 467–474 (extension modules) |
 | Python | Gorelick & Ozsvald (2020) — *High Performance Python* | Ch.7 pp. 161–211 |
-| Python | Shaw (2020) — *CPython Internals* | (relevant chapters) |
+| Python | Shaw (2020) — *CPython Internals* | pp. 202–219, pp. 285–315, pp. 364–369 |
+| Python | Beazley & Jones (2013) — *Python Cookbook* | Ch.15 pp. 597–663 (Recipes 15.1, 15.2, 15.9, 15.10) |
+| Python | Martelli et al. (2023) — *Python in a Nutshell* | Ch.25 pp. 659–660 + online supplement (modern Python-FFI tool landscape) |
 
 ### External Resources
 
