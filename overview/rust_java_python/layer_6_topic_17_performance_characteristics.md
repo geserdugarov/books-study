@@ -561,9 +561,9 @@ long sum = list.stream()
     .sum();
 ```
 
-**Project Valhalla** (JEP 401, in progress) aims to introduce value types that eliminate object headers for small, identity-free types. `Complex(double re, double im)` would be 16 bytes instead of 32 bytes, and arrays of value types would be flattened (contiguous memory, no pointers).
+**Project Valhalla** (JEP 401, in progress) aims to introduce value types that eliminate object headers for small, identity-free types — Beckwith Ch.2 walks through the type-system evolution that motivates it. `Complex(double re, double im)` would be 16 bytes instead of 32 bytes, and arrays of value types would be flattened (contiguous memory, no pointers). Valhalla also pursues specialized generics so `List<Integer>` could store unboxed `int`s, closing one of the largest remaining performance gaps between Java and Rust/C++ for numerical workloads.
 
-> **Sources:** Oaks (2020) Ch.7 pp. 203–248 · Beckwith (2024) Ch.6 pp. 177–217 · Bloch (2018) Item 6 · [OpenJDK — JOL](https://github.com/openjdk/jol) · [Aleksey Shipilev — Java Objects Inside Out](https://shipilev.net/jvm/objects-inside-out/) · [JEP 401 — Value Classes and Objects](https://openjdk.org/jeps/401)
+> **Sources:** Oaks (2020) Ch.7 pp. 203–248 · Beckwith (2024) Ch.2 pp. 43–68 · Beckwith (2024) Ch.6 pp. 177–217 · Bloch (2018) Item 6 · [OpenJDK — JOL](https://github.com/openjdk/jol) · [Aleksey Shipilev — Java Objects Inside Out](https://shipilev.net/jvm/objects-inside-out/) · [JEP 401 — Value Classes and Objects](https://openjdk.org/jeps/401)
 
 ### Python: PyObject Overhead and Reference Counting Cost
 

@@ -166,6 +166,8 @@ Key concepts:
 - **`@ParameterizedTest`** — runs the same test with different inputs via `@ValueSource`, `@CsvSource`, `@MethodSource`, or `@EnumSource`.
 - **Extension model** — `@ExtendWith(MyExtension.class)` hooks into the test lifecycle, replacing JUnit 4's `@Rule`. Extensions can inject parameters, provide test instances, and handle exceptions.
 - **Test directory** — by convention, tests live in `src/test/java` (separate from `src/main/java`), managed by Maven or Gradle.
+- **Integration testing with Testcontainers** — Evans Ch.14 recommends Testcontainers for tests that need a real database, message broker, or other infrastructure. Containers spin up at test start and tear down at end, avoiding the mock/prod divergence pitfalls of mocking heavy dependencies.
+- **Common unit-test pitfalls** — Valeev Ch.10 catalogues recurring mistakes: malformed assertions, broken exception tests (catching too much or asserting the wrong type), premature exits that skip later assertions, swallowed `AssertionError`s inside `catch (Throwable)`, misuse of `assertNotEquals` for equality-contract checks, and malformed test methods (missing `@Test`, wrong signature). `EqualsVerifier` (Jan Ouwens) addresses the equality-contract case algebraically — reflexivity, symmetry, transitivity, consistency, null-handling — replacing dozens of fragile hand-written assertions.
 
 **Testing concurrent programs** requires special techniques because tests must exercise timing-dependent behaviors. Goetz et al. introduce patterns: using barriers to synchronize test threads, testing blocking operations with timed joins, and interleaving assertions with concurrent execution. This is uniquely challenging in Java — Rust's type system (`Send`/`Sync`) partially addresses concurrent correctness at compile time.
 
@@ -189,7 +191,7 @@ void testPutTakeCorrectness() throws Exception {
 }
 ```
 
-> **Sources:** Evans et al (2022) Ch.13 pp. 437–465 · Goetz et al (2006) Ch.12 pp. 247–272 · [JUnit 5 User Guide](https://junit.org/junit5/docs/current/user-guide/) · [Baeldung — JUnit 5 Tutorial](https://www.baeldung.com/junit-5)
+> **Sources:** Evans et al (2022) Ch.13 pp. 437–465 · Evans et al (2022) Ch.14 pp. 466–493 · Goetz et al (2006) Ch.12 pp. 247–272 · Valeev (2024) Ch.10 pp. 274–310 · [JUnit 5 User Guide](https://junit.org/junit5/docs/current/user-guide/) · [Baeldung — JUnit 5 Tutorial](https://www.baeldung.com/junit-5) · [EqualsVerifier](https://jqno.nl/equalsverifier/) · [Testcontainers for Java](https://java.testcontainers.org/)
 
 ### Python: `unittest`, `doctest`, and `pytest`
 
@@ -291,7 +293,37 @@ Key pytest concepts:
 - **`@pytest.mark.parametrize`** — runs a test with multiple input sets.
 - **Plugins** — `pytest-cov` (coverage), `pytest-xdist` (parallel execution), `pytest-asyncio` (async tests).
 
-> **Sources:** Martelli et al (2023) Ch.17 pp. 513–540 · Viafore (2021) Ch.21 pp. 297–313 · Viafore (2021) Ch.22 pp. 315–325 · Slatkin (2025) Ch.13 pp. 533–545 · [Python docs — `unittest`](https://docs.python.org/3/library/unittest.html) · [Python docs — `doctest`](https://docs.python.org/3/library/doctest.html) · [pytest documentation](https://docs.pytest.org/en/stable/) · [pytest — Fixtures reference](https://docs.pytest.org/en/stable/reference/fixtures.html) · [pytest — Parametrizing tests](https://docs.pytest.org/en/stable/how-to/parametrize.html) · [Real Python — Effective Python Testing with Pytest](https://realpython.com/pytest-python-testing/)
+**Acceptance / BDD testing** sits above unit and integration tests in Viafore's testing pyramid (Ch.21). Viafore Ch.22 advocates `behave` — a Python implementation of Cucumber's Gherkin syntax — for acceptance tests that describe behaviour in business-readable language. Feature files (`.feature`) contain `Given`/`When`/`Then` steps, and step definitions in Python wire each phrase to test code:
+
+```gherkin
+# features/login.feature
+Feature: User login
+  Scenario: Successful login
+    Given a user "alice" with password "s3cret"
+    When alice submits the login form with correct credentials
+    Then she sees the dashboard
+```
+
+```python
+# features/steps/login.py
+from behave import given, when, then
+
+@given('a user "{name}" with password "{pw}"')
+def step_user(context, name, pw):
+    context.user = create_user(name, pw)
+
+@when('{name} submits the login form with correct credentials')
+def step_login(context, name):
+    context.response = login(context.user.name, context.user.password)
+
+@then('she sees the dashboard')
+def step_dashboard(context):
+    assert "Dashboard" in context.response.body
+```
+
+BDD complements unit testing: unit tests verify implementation details that change with refactoring; acceptance tests verify behaviour that should remain stable. JVM equivalents (Evans Ch.14) include Cucumber-JVM for Java and Spek for Kotlin/JVM — the principles transfer directly across all three languages.
+
+> **Sources:** Martelli et al (2023) Ch.17 pp. 513–540 · Viafore (2021) Ch.21 pp. 297–313 · Viafore (2021) Ch.22 pp. 315–325 · Slatkin (2025) Ch.13 pp. 533–545 · [Python docs — `unittest`](https://docs.python.org/3/library/unittest.html) · [Python docs — `doctest`](https://docs.python.org/3/library/doctest.html) · [pytest documentation](https://docs.pytest.org/en/stable/) · [pytest — Fixtures reference](https://docs.pytest.org/en/stable/reference/fixtures.html) · [pytest — Parametrizing tests](https://docs.pytest.org/en/stable/how-to/parametrize.html) · [Real Python — Effective Python Testing with Pytest](https://realpython.com/pytest-python-testing/) · [`behave` documentation](https://behave.readthedocs.io/en/stable/)
 
 ### Cross-Language Comparison: Built-in Test Frameworks
 
@@ -1157,7 +1189,9 @@ LLVM source-based coverage inserts counters at compile time and records which co
 
 Limitations: coverage of generic code depends on which monomorphizations are exercised; macro-generated code coverage can be misleading (shows macro expansion, not source).
 
-> **Sources:** Matthews (2024) Ch.6 pp. 135–140 · [`cargo-tarpaulin` GitHub repository](https://github.com/xd009642/tarpaulin) · [`cargo-llvm-cov` GitHub repository](https://github.com/taiki-e/cargo-llvm-cov) · [Rust source-based code coverage guide](https://doc.rust-lang.org/rustc/instrument-coverage.html)
+For mutation testing, `cargo-mutants` applies source-level mutations (replacing operators, constants, and return values) and re-runs `cargo test` against each — surviving mutations flag assertions that fail to detect a behavioural change.
+
+> **Sources:** Matthews (2024) Ch.6 pp. 135–140 · [`cargo-tarpaulin` GitHub repository](https://github.com/xd009642/tarpaulin) · [`cargo-llvm-cov` GitHub repository](https://github.com/taiki-e/cargo-llvm-cov) · [Rust source-based code coverage guide](https://doc.rust-lang.org/rustc/instrument-coverage.html) · [`cargo-mutants` GitHub repository](https://github.com/sourcefrog/cargo-mutants)
 
 ### Java: JaCoCo
 
@@ -1266,6 +1300,8 @@ mutmut results          # show surviving mutations
 mutmut show 42          # show specific mutation
 ```
 
+The Rust equivalent is `cargo-mutants` (source-level mutations); the Java equivalent is `pitest` (bytecode-level mutations). All three answer the same question — "do my tests actually fail when the code is wrong?" — but mutate at different abstraction levels: AST (Python), source text (Rust), or compiled bytecode (Java).
+
 > **Sources:** Viafore (2021) Ch.24 pp. 347–365 · Martelli et al (2023) Ch.17 pp. 555–561 · [`coverage.py` documentation](https://coverage.readthedocs.io/en/latest/) · [`coverage.py` GitHub repository](https://github.com/nedbat/coveragepy) · [`pytest-cov` documentation](https://pytest-cov.readthedocs.io/en/latest/) · [`pytest-cov` GitHub repository](https://github.com/pytest-dev/pytest-cov) · [Ned Batchelder — "Coverage.py: The Under-Covered Python Tool"](https://nedbatchelder.com/text/coveragepy.html)
 
 ### CI/CD Integration and Coverage Best Practices
@@ -1312,7 +1348,7 @@ Coverage anti-patterns:
 | Rust | Gjengset (2022) — *Rust for Rustaceans* | Ch.6 pp. 85–100 |
 | Rust | Matthews (2024) — *Code Like a Pro in Rust* | Ch.3 pp. 43–62, Ch.6 pp. 121–140, Ch.7 pp. 141–154 |
 | Rust | Blandy & Orendorff (2017) — *Programming Rust* | Ch.8 pp. 161–191 |
-| Java | Valeev (2024) — *100 Java Mistakes* | Ch.1 pp. 1–18 |
+| Java | Valeev (2024) — *100 Java Mistakes* | Ch.1 pp. 1–18, Ch.10 pp. 274–310 |
 | Java | Evans et al (2022) — *The Well-Grounded Java Developer* | Ch.13 pp. 437–465, Ch.14 pp. 466–493 |
 | Java | Goetz et al (2006) — *Java Concurrency in Practice* | Ch.12 pp. 247–272 |
 | Java | Oaks (2020) — *Java Performance* | Ch.2 pp. 15–48, Ch.3 pp. 49–88 |
@@ -1358,6 +1394,7 @@ Coverage anti-patterns:
 - [Miri](https://github.com/rust-lang/miri)
 - [`cargo-tarpaulin` GitHub repository](https://github.com/xd009642/tarpaulin)
 - [`cargo-llvm-cov` GitHub repository](https://github.com/taiki-e/cargo-llvm-cov)
+- [`cargo-mutants` GitHub repository](https://github.com/sourcefrog/cargo-mutants)
 - [Rust source-based code coverage guide](https://doc.rust-lang.org/rustc/instrument-coverage.html)
 
 **Java**
@@ -1366,6 +1403,8 @@ Coverage anti-patterns:
 - [Baeldung — JUnit 5 Tutorial](https://www.baeldung.com/junit-5)
 - [TestNG documentation](https://testng.org/doc/documentation-main.html)
 - [Baeldung — JUnit 5 vs TestNG](https://www.baeldung.com/junit-vs-testng)
+- [Testcontainers for Java](https://java.testcontainers.org/)
+- [EqualsVerifier](https://jqno.nl/equalsverifier/)
 - [jqwik user guide](https://jqwik.net/docs/current/user-guide.html)
 - [jqwik GitHub repository](https://github.com/jqwik-team/jqwik)
 - [Baeldung — Property-Based Testing with jqwik](https://www.baeldung.com/java-jqwik-property-based-testing)
@@ -1403,6 +1442,7 @@ Coverage anti-patterns:
 - [pytest — Fixtures reference](https://docs.pytest.org/en/stable/reference/fixtures.html)
 - [pytest — Parametrizing tests](https://docs.pytest.org/en/stable/how-to/parametrize.html)
 - [Real Python — Effective Python Testing with Pytest](https://realpython.com/pytest-python-testing/)
+- [`behave` documentation](https://behave.readthedocs.io/en/stable/)
 - [Hypothesis documentation](https://hypothesis.readthedocs.io/en/latest/)
 - [Hypothesis — Quick start guide](https://hypothesis.readthedocs.io/en/latest/quickstart.html)
 - [Hypothesis — Available strategies](https://hypothesis.readthedocs.io/en/latest/data.html)
